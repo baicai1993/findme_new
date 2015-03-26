@@ -1,0 +1,111 @@
+package com.neu.findme.domain;
+
+import java.io.Serializable;
+
+import com.google.gson.annotations.SerializedName;
+import com.lidroid.xutils.db.annotation.Column;
+import com.lidroid.xutils.db.annotation.Id;
+import com.lidroid.xutils.db.annotation.Table;
+
+/**
+ * @author fty
+ *财务记录的实体类
+ *2015-03-09 21:03:09
+ */
+@Table(name = "moneyrec")  
+public class MoneyRecordBean implements Serializable {
+	private static final long serialVersionUID = 1L;
+	@Id(column="id")
+	private String id;//id主键
+	private String handler;//处理人，就是登录者的姓名
+	private String handler_id;//处理人id
+	private String recorder;//记录人的姓名
+	private float total_price; //财务总价
+	private String project_name;//工程名
+	private String type_name;//类别名
+	private float unit_price;//单价
+	@SerializedName("amount")
+	private int number;//数量
+	@Column(column = "description")@SerializedName("description")
+	private String desc;//描述
+	@Column(column = "rec_time")
+	private String timeStr;//上传时间
+
+	public MoneyRecordBean(){}
+	public void setId(String moneyRecordId) {
+		this.id = moneyRecordId;
+	}
+	public String getId() {
+		return id;
+	}
+	public String getHandler() {
+		return handler;
+	}
+	public void setHandler(String handler) {
+		this.handler = handler;
+	}
+	public String getHandler_id() {
+		return handler_id;
+	}
+	public void setHandler_id(String handler_id) {
+		this.handler_id = handler_id;
+	}
+	public String getRecorder() {
+		return recorder;
+	}
+	public void setRecorder(String recorder) {
+		this.recorder = recorder;
+	}
+	public float getTotal_price() {
+		return total_price;
+	}
+	public void setTotal_price(float total_price) {
+		this.total_price = total_price;
+	}
+	public String getProject_name() {
+		return project_name;
+	}
+	public void setProject_name(String project_name) {
+		this.project_name = project_name;
+	}
+	public String getType_name() {
+		return type_name;
+	}
+	public void setType_name(String type_name) {
+		this.type_name = type_name;
+	}
+	public float getUnit_price() {
+		return unit_price;
+	}
+	public void setUnit_price(float unit_price) {
+		this.unit_price = unit_price;
+	}
+	public int getNumber() {
+		return number;
+	}
+	public void setNumber(int number) {
+		this.number = number;
+	}
+	public String getDesc() {
+		return desc;
+	}
+	public void setDesc(String desc) {
+		this.desc = desc;
+	}
+	public String getTimeStr() {
+		return timeStr;
+	}
+	public void setTimeStr(String timeStr) {
+		this.timeStr = timeStr;
+	}
+	@Override
+	public String toString() {
+		return "MoneyRecordBean [id=" + id + ", handler=" + handler
+				+ ", handler_id=" + handler_id + ", recorder=" + recorder
+				+ ", total_price=" + total_price +  ", project_name=" + project_name + ", type_name=" + type_name
+				+ ", unit_price=" + unit_price + ", number=" + number
+				+ ", desc=" + desc + ", timeStr=" + timeStr + "]";
+	}
+	
+	
+}

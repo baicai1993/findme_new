@@ -1,0 +1,171 @@
+package com.neu.findme.activity;
+
+
+import java.io.File;
+import java.util.List;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.lidroid.xutils.view.annotation.event.OnItemClick;
+import com.neu.findme.R;
+import com.neu.findme.adapter.NoticeListAdapter;
+import com.neu.findme.domain.NoticeBean;
+import com.neu.findme.server_db.NoticeRecDBserver;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.utils.FileUtil;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+import com.neu.findme.utils.MyCookie;
+import com.neu.findme.view.MyAlertDialog;
+
+/**
+ * @author fty
+ *通知中心负责显示后台Service刷新到的有未读回复的记录，直接从数据库中读出
+ *每看完一条记录，会变更为已读，从列表中移除，更新抽屉通知的未读记录数。右上角按钮可以清空全部未读记录
+ *2015-03-09 20:10:42
+ */
+public class NoticeCenterActivity extends Activity {
+	@ViewInject(R.id.backButton)
+	private Button backButton;
+	@ViewInject(R.id.emptyButton)
+	private Button emptyButton;
+	@ViewInject(R.id.listView)
+	private ListView listView;
+	private NoticeListAdapter listViewAdapter;
+	private NoticeRecDBserver noticeRecDBserver;
+	private String userId;
+	//清空未读数据相关
+	private HttpWebServer webServer;
+	private ProgressDialog progressDialog = null;
+	@OnClick(R.id.backButton)
+	public void backBtnListener(View view){
+		NoticeCenterActivity.this.finish();
+	}
+	@OnClick(R.id.emptyButton)
+	public void emptyBtnListener(View view){
+		//清空全部未读记录
+		emptyNotReads();
+	}
+	//list监听事件
+	@OnItemClick(R.id.listView)
+	public void listItemListener(AdapterView<?> parent, View view,int position, long id){
+		Intent intent = new Intent(NoticeCenterActivity.this,PhotoRecordDetailActivity.class);
+		intent.putExtra("recordBeanId", position);
+		intent.putExtra("bean", NoticeListAdapter.recordBeans.get(position));
+		intent.putExtra("flag", "noticeFlag");
+		startActivity(intent);
+	}
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.fragment_notice_center);
+		ViewUtils.inject(this);
+		userId = MyApplication.get("userId")+"";
+		noticeRecDBserver = new NoticeRecDBserver(this);
+		webServer = new HttpWebServer();
+		List<NoticeBean> list = noticeRecDBserver.queryAllNotRead();//获取所有未读记录
+		//设置sd卡文件路径
+		for(NoticeBean bean:list){
+			if(bean.getUserId().equals(userId)){
+				bean.setSdUri(FileUtil.NET_PATH+userId+File.separator+bean.getPhotoId());
+			}else {
+				bean.setSdUri(FileUtil.OTHER_PATH+userId+File.separator+bean.getPhotoId());
+			}
+		}
+		listViewAdapter = new NoticeListAdapter(this,list);
+		listView.setAdapter(listViewAdapter);
+	}
+	
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		userId = MyApplication.get("userId")+"";
+		noticeRecDBserver = new NoticeRecDBserver(this);
+		if(listViewAdapter!=null){
+			listViewAdapter.notifyDataSetChanged();
+		}
+		super.onResume();
+	}
+	//清空全部未读记录
+	private void emptyNotReads(){
+		final MyAlertDialog myAlertDialog = new MyAlertDialog(this);
+		myAlertDialog.showWoodDialog(true);
+		myAlertDialog.getDialog_title().setText(MyApplication.getApplication().getString(R.string.logoffDialog_title));
+		myAlertDialog.getDialog_msg().setText(MyApplication.getApplication().getString(R.string.emptyNotReadDialog_content));
+		myAlertDialog.getPosButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				myAlertDialog.dismiss();
+				progressDialog = ProgressDialog.show(NoticeCenterActivity.this, MyApplication.getApplication().
+						getString(R.string.progressDialog_wait),MyApplication.getApplication().
+						getString(R.string.progressDialog_waiting), false, false);
+				webServer.allHadRead(userId,hadReadRC);
+			}
+		});
+		myAlertDialog.getNevButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				myAlertDialog.dismiss();
+			}
+		});
+	}
+	//告知服务器记录已经读取完毕
+	private RequestCallBack<String> hadReadRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub\
+			Log.e("ftyfty", arg1);
+			progressDialog.dismiss();
+			Toast.makeText(NoticeCenterActivity.this, MyApplication.getApplication().
+					getString(R.string.emptyNotRead_fail), Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			//标记记录为已读
+			if(JsonParseUtils.jsonToBoolean(arg0.result)){
+				for(NoticeBean bean:NoticeListAdapter.recordBeans){
+					bean.setIsRead(true);
+				}
+				//更新数据库和列表
+				noticeRecDBserver.addListOrUpdate(NoticeListAdapter.recordBeans);
+				NoticeListAdapter.recordBeans.clear();
+				listViewAdapter.notifyDataSetChanged();
+				MyCookie.putString("noticeNum", "0");
+				//更新抽屉里显示的消息数
+				if(MainActivity.mNavDrawerItems!=null&&MainActivity.mAdapter!=null){
+					MainActivity.mNavDrawerItems.get(1).setCount("0");
+					MainActivity.mAdapter.notifyDataSetChanged();
+				}
+			}else {
+				Toast.makeText(NoticeCenterActivity.this, MyApplication.getApplication().
+						getString(R.string.emptyNotRead_fail), Toast.LENGTH_SHORT).show();
+			}
+			//停止转动
+			progressDialog.dismiss();
+		}
+	};
+}

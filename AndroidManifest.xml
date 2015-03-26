@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.neu.findme"
+    android:versionCode="1"
+    android:versionName="1.0.3" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="20" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".utils.MyApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:screenOrientation="portrait"
+        android:theme="@style/AppTheme" >
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="2140bd4655815d79e79f6e1955fcd46b" />
+
+        <activity android:name=".activity.RecordManageActivityTab1" >
+        </activity>
+        <activity android:name=".activity.MoneyManageActivityTab2" >
+        </activity>
+        <activity android:name=".activity.AuthorityManageActivityTab3" >
+        </activity>
+        <activity android:name=".activity.Tab4Activity" >
+        </activity>
+        <activity android:name=".activity.SignInActivity" >
+        </activity>
+        <activity android:name=".activity.NoticeCenterActivity" >
+        </activity>
+        <activity android:name=".activity.PersonalInfoActivity" >
+        </activity>
+        <activity android:name=".activity.AboutUsActivity" >
+        </activity>
+        <activity android:name=".activity.NetSettingActivity" >
+        </activity>
+        <activity android:name=".activity.PhotoRecordEditActivity" >
+        </activity>
+        <activity android:name=".activity.MoneyRecordDetailActivity" >
+        </activity>
+        <activity android:name=".activity.SomeoneRecordActivity" >
+        </activity>
+        <activity android:name=".activity.MoneyRecordEditActivity" >
+        </activity>
+        <activity android:name=".activity.PhotoRecordDetailActivity" >
+        </activity>
+        <activity android:name=".activity.ShowBigPhotoActivity" >
+        </activity>
+        <activity android:name=".activity.PhotoRecChangeActivity" >
+        </activity>
+        <activity android:name=".activity.WaitpageActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activity.IPconfigActivity" >
+        </activity>
+        <activity android:name=".activity.LoginActivity" >
+        </activity>
+        <activity
+            android:name=".activity.MainActivity"
+            android:label="@string/app_name" >
+        </activity>
+
+        <service android:name=".service.GetNoticeService" >
+            <action android:name="android.intent.action.notice" >
+            </action>
+        </service>
+
+        <activity
+            android:name=".activity.SettingActivity"
+            android:label="@string/title_activity_setting" >
+        </activity>
+        <activity
+            android:name="com.neu.findme.activity.SomeoneInfoActivity"
+            android:label="@string/title_activity_someone_info" >
+        </activity>
+    </application>
+
+</manifest>

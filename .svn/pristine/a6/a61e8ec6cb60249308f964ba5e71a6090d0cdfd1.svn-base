@@ -1,0 +1,136 @@
+package com.neu.findme.domain;
+
+import java.io.Serializable;
+
+import com.google.gson.annotations.SerializedName;
+import com.lidroid.xutils.db.annotation.Id;
+import com.lidroid.xutils.db.annotation.Table;
+
+/**
+ * @author fty 用户信息实体类 2015-03-09 21:08:52
+ */
+@Table(name = "user")
+// 加上注解， 混淆后表名不受影响
+public class UserBean implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	@Id(column = "id")
+	@SerializedName("loginid")
+	private String id;
+	@SerializedName("birthStr")
+	private String birthday;
+	private String email;
+	private String gender;
+	private String headimage;
+	private String telephone;
+	private String name;
+	private boolean loading;// 是否正在加载头像
+
+	// 权限标识
+	// 1代表互相不可见 2代表自己可见对方 3代表对方可见自己 4代表互相可见 5代表自己，部分实现
+	private int authorityFlag;
+	private boolean canSeeMe;
+	private boolean icanSee;
+
+	public UserBean() {
+	}
+
+	public boolean isLoading() {
+		return loading;
+	}
+
+	public void setIsloading(boolean loading) {
+		this.loading = loading;
+	}
+
+	public boolean isIcanSee() {
+		return icanSee;
+	}
+
+	public void setIcanSee(boolean icanSee) {
+		this.icanSee = icanSee;
+	}
+
+	public boolean isCanSeeMe() {
+		return canSeeMe;
+	}
+
+	public void setCanSeeMe(boolean canSeeMe) {
+		this.canSeeMe = canSeeMe;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String userId) {
+		this.id = userId;
+	}
+
+	public String getBirthday() {
+		return birthday;
+	}
+
+	public void setBirthday(String birthday) {
+		this.birthday = birthday;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getGender() {
+		return gender;
+	}
+
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+
+	public String getHeadimage() {
+		return headimage;
+	}
+
+	public void setHeadimage(String headimage) {
+		this.headimage = headimage;
+	}
+
+	public String getTelephone() {
+		return telephone;
+	}
+
+	public void setTelephone(String telephone) {
+		this.telephone = telephone;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public int getAuthorityFlag() {
+		return authorityFlag;
+	}
+
+	public void setAuthorityFlag(int authorityFlag) {
+		this.authorityFlag = authorityFlag;
+	}
+
+	@Override
+	public String toString() {
+		return "UserBean [id=" + id + ", birthday=" + birthday + ", email="
+				+ email + ", gender=" + gender + ", headimage=" + headimage
+				+ ", telephone=" + telephone + ", name=" + name
+				+ ", authorityFlag=" + authorityFlag + "]";
+	}
+
+}

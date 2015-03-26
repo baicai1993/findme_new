@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_wooden3"
+    android:orientation="vertical" >
+<RelativeLayout
+            android:id="@+id/controlLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="50dip"
+            android:background="@drawable/bg_wooden_bottom"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/refreshButton"
+                android:layout_width="40dip"
+                android:layout_height="37dip"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="9dp"
+                android:layout_marginTop="8dp"
+                android:background="@anim/btn_refresh2" />
+
+            <TextView
+                android:id="@+id/main_title"
+                android:layout_width="wrap_content"
+                android:layout_height="45dip"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="5dp"
+                android:paddingTop="7dp"
+				android:textColor="@color/black1"
+                android:text="@string/menu_item_title_money_manager"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/addButton"
+                android:layout_width="35dp"
+                android:layout_height="35dip"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="8dp"
+                android:background="@anim/btn_add" />
+        </RelativeLayout>
+    <LinearLayout
+        android:id="@+id/spinnerLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="42dip"
+        android:layout_margin="5dp"
+        android:background="@drawable/bg_spinner"
+        android:orientation="horizontal" 
+        android:layout_below="@+id/controlLayout">
+
+        <Spinner
+            android:id="@+id/project_spinner"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="3dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_weight="1" 
+            />
+
+        <Spinner
+            android:id="@+id/type_spinner"
+            android:layout_width="0dp"
+            android:layout_height="fill_parent"
+            android:layout_marginBottom="3dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="3dp"
+            android:layout_weight="1" 
+    		/>
+    </LinearLayout>
+
+<LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_above="@+id/budgetBalanceLinearLayout"
+        android:layout_below="@+id/spinnerLinearLayout" >
+        
+            <com.neu.findme.view.PullToRefreshView
+                android:id="@+id/refreshBar"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:orientation="vertical" >
+
+                <ListView
+                    android:id="@+id/listView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:scrollbars="none" >
+                </ListView>
+            </com.neu.findme.view.PullToRefreshView> 
+        </LinearLayout>
+
+    <LinearLayout
+            android:id="@+id/budgetBalanceLinearLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" 
+        	android:layout_alignParentBottom="true"
+        	android:layout_centerHorizontal="true"
+        	android:layout_margin="5dp"
+        	android:baselineAligned="false"
+        	android:background="@drawable/bg_budget">
+      	<LinearLayout
+      	    android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="41dp"
+                android:gravity="center_vertical"
+                android:paddingLeft="20dp"
+                android:text="@string/money_budget" />
+            <TextView
+                android:id="@+id/project_budgetTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="41dp"
+                android:singleLine="true"
+                android:gravity="center_vertical"
+                android:text="@string/money_zero" />
+       	</LinearLayout>
+      	<LinearLayout
+      	    android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal" >
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="41dp"
+                android:gravity="center_vertical"
+                android:paddingLeft="20dp"
+                android:text="@string/money_remainder" />
+            <TextView
+                android:id="@+id/project_balanceTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="41dp"
+                android:singleLine="true"
+                android:gravity="center_vertical"
+                android:text="@string/money_zero" />
+       	</LinearLayout>
+      </LinearLayout>
+
+</RelativeLayout>

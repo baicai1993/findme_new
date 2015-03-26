@@ -1,0 +1,202 @@
+package com.neu.findme.activity;
+
+import java.util.ArrayList;
+import java.util.List;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.neu.findme.R;
+import com.neu.findme.domain.ProjectCosttypeBean;
+import com.neu.findme.domain.UnfinishProject;
+import com.neu.findme.domain.UserBean;
+import com.neu.findme.server_db.ProjectCosttypeDBServer;
+import com.neu.findme.server_db.UnfinishProjectDBServer;
+import com.neu.findme.server_db.UserDBServer;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+import com.neu.findme.utils.MyCookie;
+
+/**
+ * @author fty
+ * 登录界面提供登录和跳转到ipconfig界面更改设置的功能，登陆成功后默认以后是自动登录状态
+ * 登录过程中会初始化服务器的一些重要数据：工程-类型更新时间、工程-类型信息、未完成的项目信息
+ * 这些信息全部初始化成功会进入app首页，如果失败会在不同阶段toast提示，登录过程中，按钮监听失效
+ *2015-03-09 17:01:40
+ */
+public class LoginActivity extends Activity {
+	@ViewInject(R.id.login_button)
+	private Button loginButton;
+	@ViewInject(R.id.userIdEdit)
+	private EditText userIdEditText;
+	@ViewInject(R.id.passwordEdit)
+	private EditText passwordEditText;
+	@ViewInject(R.id.netSettingTextView)
+	private TextView netSettingTextView;
+	@ViewInject(R.id.autoLoginCheckBox)
+	private CheckBox autoLoginCheckBox;
+	private UserDBServer userDBServer;//用于存储个人信息数据
+	private ProjectCosttypeDBServer pcDBServer;//用于存储初始化的工程-类别数据
+	private UnfinishProjectDBServer pDBServer;//用于存储初始化的未完成的项目数据
+	private HttpWebServer webServer;
+	private String userId;
+	//初始化数据相关
+	private UserBean userBean;
+	private String updateTime;
+	private List<ProjectCosttypeBean> projectCosttypeBeans;
+	private List<String> unfinishProjects;
+	@OnClick(R.id.netSettingTextView)
+	public void netSettingListener(View view){
+		//告知ipconfig界面intent的来源
+		startActivity(new Intent(this, IPconfigActivity.class).putExtra("flagFromLoginActivity", true));
+		LoginActivity.this.finish();
+	}
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.activity_login);
+		ViewUtils.inject(this);//注入事件
+		userDBServer = new UserDBServer(this);
+		pcDBServer = new ProjectCosttypeDBServer(this);
+		pDBServer = new UnfinishProjectDBServer(this);
+		webServer = new HttpWebServer();
+		loginButton.setOnClickListener(loginBtnListener);
+		//读取上次登录的用户名，读到直接跳转进主页面
+		if (!MyCookie.getString("userId", "").equals("")) {
+			startActivity(new Intent(this, MainActivity.class));
+			LoginActivity.this.finish();
+		}
+	}
+	//处理登录的web请求结果
+	private RequestCallBack<String> loginRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Toast.makeText(LoginActivity.this,MyApplication.getApplication().getString(R.string.net_block), Toast.LENGTH_SHORT).show();
+			loginButton.setOnClickListener(loginBtnListener);
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			userBean = (UserBean) JsonParseUtils.jsonToObject(arg0.result, UserBean.class, "user");
+			if(userBean!=null){
+				//登录成功后，获取工程-类型更新时间以便以后检查更新
+				webServer.getProjectTypeUpdateTime(getProjectTypeUpdateTimeRC);
+			}else {
+				Toast.makeText(LoginActivity.this, MyApplication.getApplication().getString(R.string.login_fail), Toast.LENGTH_SHORT).show();
+				loginButton.setOnClickListener(loginBtnListener);
+			}
+		}
+	};
+	//处理获取工程-类型更新时间的web请求结果
+	private RequestCallBack<String> getProjectTypeUpdateTimeRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Toast.makeText(LoginActivity.this,MyApplication.getApplication().getString(R.string.getUpdateTime_fail), Toast.LENGTH_SHORT).show();
+			loginButton.setOnClickListener(loginBtnListener);
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			updateTime = JsonParseUtils.jsonToString(arg0.result, "updatetime");
+			webServer.getProjectCostTypes(getProjectTypeRC);
+		}
+	};
+	//处理初始化工程-类型信息的web请求结果
+	private RequestCallBack<String> getProjectTypeRC =new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Toast.makeText(LoginActivity.this, MyApplication.getApplication().getString(R.string.initProject_fail), Toast.LENGTH_SHORT).show();
+			loginButton.setOnClickListener(loginBtnListener);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			projectCosttypeBeans = (List<ProjectCosttypeBean>) JsonParseUtils.jsonToEntitylist(arg0.result, ProjectCosttypeBean.class);
+			if(projectCosttypeBeans.size()>0){
+				webServer.getUnfinishProject(getUnfinishProjectRC);
+			}else {
+				Toast.makeText(LoginActivity.this, MyApplication.getApplication().getString(R.string.initServerData_fault), Toast.LENGTH_SHORT).show();
+				loginButton.setOnClickListener(loginBtnListener);
+			}
+		}
+	};
+	//处理获取未完成项目的web请求结果
+	private RequestCallBack<String> getUnfinishProjectRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Toast.makeText(LoginActivity.this, MyApplication.getApplication().getString(R.string.initProject_fail), Toast.LENGTH_SHORT).show();
+			loginButton.setOnClickListener(loginBtnListener);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			unfinishProjects = (List<String>) JsonParseUtils.jsonToList(arg0.result, String.class);
+			List<UnfinishProject> unProjects = new ArrayList<UnfinishProject>();
+			if(unfinishProjects.size()>0){
+				for(String s:unfinishProjects){
+					unProjects.add(new UnfinishProject(s));
+				}
+				//最后一项数据初始化成功，把之前的数据持久化
+				if(autoLoginCheckBox.isChecked()){
+					MyCookie.putString("userId", userId);
+				}
+				MyApplication.put("userId",userId);
+				userBean.setAuthorityFlag(5);
+				userBean.setId(userId);
+				userDBServer.add(userBean);
+				MyCookie.putString("updateTime", updateTime);
+				pcDBServer.resetTable(projectCosttypeBeans, ProjectCosttypeBean.class);
+				pDBServer.resetTable(unProjects, UnfinishProject.class);
+				//跳转到主界面
+				startActivity(new Intent(LoginActivity.this,MainActivity.class));
+				LoginActivity.this.finish();
+			}else {
+				Toast.makeText(LoginActivity.this, MyApplication.getApplication().getString(R.string.initServerData_fault), Toast.LENGTH_SHORT).show();
+				loginButton.setOnClickListener(loginBtnListener);
+			}
+		}
+	};
+	private OnClickListener loginBtnListener = new OnClickListener() {
+
+		@Override
+		public void onClick(View v) {
+			// TODO Auto-generated method stub
+		    userId =userIdEditText.getText()+"";
+			webServer.checkLogin(userId, passwordEditText.getText()+"", loginRC);
+			loginButton.setOnClickListener(null);//防止多次登录,在登录中按钮为无监听状态
+		}
+		
+	};
+
+}

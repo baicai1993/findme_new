@@ -1,0 +1,32 @@
+package com.neu.findme.domain;
+
+import com.google.gson.annotations.SerializedName;
+
+/**
+ * @author cxm
+ *预算，余额的实体类，为了方便映射json数据
+ *2015-03-09 21:00:26
+ */
+public class BudgetBalance {
+	@SerializedName("total_budget")
+	private String budget;//预算
+	@SerializedName("total_balance")
+	private String balance;//余额
+	public String getBudget() {
+		return budget;
+	}
+	public void setBudget(String budget) {
+		this.budget = budget;
+	}
+	public String getBalance() {
+		return balance;
+	}
+	public void setBalance(String balance) {
+		this.balance = balance;
+	}
+	@Override
+	public String toString() {
+		return "BudgetBalance [budget=" + budget + ", balance=" + balance + "]";
+	}
+	
+}

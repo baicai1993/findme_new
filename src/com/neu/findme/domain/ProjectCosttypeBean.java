@@ -1,0 +1,38 @@
+package com.neu.findme.domain;
+
+import com.google.gson.annotations.SerializedName;
+import com.lidroid.xutils.db.annotation.Id;
+import com.lidroid.xutils.db.annotation.Table;
+/**
+ * @author cxm
+ *工程-类型实体类
+ *2015-03-09 21:06:45
+ */
+@Table(name = "project_costtype") 
+public class ProjectCosttypeBean {
+	@Id(column="id")
+	private String id;//数据库主键
+	@SerializedName("project_name")
+	private String projectName;//工程名
+	@SerializedName("costtype_name")
+	private String costtypeName;//类别名
+	public String getProjectName() {
+		return projectName;
+	}
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+	public String getCosttypeName() {
+		return costtypeName;
+	}
+	public void setCosttypeName(String costtypeName) {
+		this.costtypeName = costtypeName;
+	}
+	@Override
+	public String toString() {
+		return "ProjectCosttypeBean [projectName=" + projectName
+				+ ", costtypeName=" + costtypeName + "]";
+	}
+
+	
+}

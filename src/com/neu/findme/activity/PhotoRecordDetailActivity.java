@@ -1,0 +1,459 @@
+package com.neu.findme.activity;
+
+import java.sql.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.UUID;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.lidroid.xutils.view.annotation.event.OnLongClick;
+import com.neu.findme.R;
+import com.neu.findme.domain.BaseRecordBean;
+import com.neu.findme.domain.CommentBean;
+import com.neu.findme.domain.LocalRecordBean;
+import com.neu.findme.domain.NetRecordBean;
+import com.neu.findme.domain.NoticeBean;
+import com.neu.findme.domain.OtherRecordBean;
+import com.neu.findme.domain.UserBean;
+import com.neu.findme.server_db.CommentDBServer;
+import com.neu.findme.server_db.LocalRecDBServer;
+import com.neu.findme.server_db.NoticeRecDBserver;
+import com.neu.findme.server_db.UserDBServer;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.utils.BitmapUtil;
+import com.neu.findme.utils.ChangeDateFormatter;
+import com.neu.findme.utils.ChangeImageTools;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+
+/**
+ * @author cxm
+ *显示照片的详细数据，长按照片可以翻转
+ *未上传的记录可以在本页上传，本页可以修改记录
+ *进入界面优先从数据库加载评论列表，再从服务器更新列表
+ *提供给照片发表评论功能，每三秒可以发送一条，不可发送空消息
+ *2015-03-09 20:39:44
+ */
+public class PhotoRecordDetailActivity extends Activity {
+	@ViewInject(R.id.upLoadButtonInShowDetail)
+	private Button uploadBtn;
+	@ViewInject(R.id.changeButtonInShowDetail)
+	private Button changeBtn;
+	@ViewInject(R.id.showDetailBackButton)
+	private Button backBtn;
+	@ViewInject(R.id.hdpiPictrueView)
+	private ImageView imageView;
+	@ViewInject(R.id.takeTimeContentText1)
+	private TextView takeTimeTV;
+	@ViewInject(R.id.locationContentText1)
+	private TextView locationTV;
+	@ViewInject(R.id.descriptionContentText1)
+	private TextView descriptionTV;
+	@ViewInject(R.id.photographerContentText1)
+	private TextView photographerTV;
+	@ViewInject(R.id.titleContentText1)
+	private TextView titleTV;
+	@ViewInject(R.id.pictureDetailEdit_workClass)
+	private TextView projectTV;
+	// 评论列表
+	@ViewInject(R.id.commentTitleLayout)
+	private FrameLayout commentTitleLayout;
+	@ViewInject(R.id.commentContentLayout)
+	private LinearLayout commentContentLayout;
+	@ViewInject(R.id.publishCommentLayout)
+	private RelativeLayout publishCommentLinearLayout;
+	@ViewInject(R.id.commentContentText)
+	private EditText commentET;
+	@ViewInject(R.id.uploadConmentButton)
+	private Button uploadCommentsBtn;
+	@ViewInject(R.id.showDetailBackButton)
+	//评论相关
+	private List<CommentBean> comments;
+	private CommentBean commentBean;
+	private static final String COMMENT = MyApplication.getApplication().getString(R.string.punish);
+	private static final String COMMENTING = MyApplication.getApplication().getString(R.string.punishing);
+	private static final String COMMENTFAIL = MyApplication.getApplication().getString(R.string.punish_fail);
+	//数据库相关
+	private CommentDBServer commentDBServer;
+	private LocalRecDBServer localRecDBServer;
+	private NoticeRecDBserver noticeRecDBserver;
+	private UserDBServer userDBServer;
+	private UserBean myself;
+	private String userId;
+	private BaseRecordBean baseBean;//将不同来源的bean向上转型，作为公共数据bean
+	//网络相关
+	private HttpWebServer webServer;
+	private ProgressDialog progressDialog = null;
+	//上个界面传递的
+	private int recordBeanId;
+	private String flag;
+	private LocalRecordBean localRecordBean;
+	private NetRecordBean netRecordBean;
+	private OtherRecordBean otherRecordBean;
+	private NoticeBean noticeBean;
+	private final int DETAIL_ACTIVITY = 1;
+	private final int RESULT_OK = 2;
+	//图片
+	private Bitmap bitmap = null;
+	private String sdUri;
+	@OnClick(R.id.showDetailBackButton)
+	public void backListenner(View view){
+		PhotoRecordDetailActivity.this.finish();
+	}
+	@OnClick(R.id.hdpiPictrueView)
+	public void imageListener(View view){
+		Intent intent = new Intent(PhotoRecordDetailActivity.this,ShowBigPhotoActivity.class);
+		intent.putExtra("recordBeanId", recordBeanId);
+		intent.putExtra("Flag", flag);
+		startActivity(intent);
+	}
+	@OnLongClick(R.id.hdpiPictrueView)
+	public boolean imageLongListener(View view){
+		Bitmap bm = ChangeImageTools.rotateImage(bitmap, 90);//每点击一次旋转90度
+		BitmapUtil.saveBmpToSd(bm,sdUri, 100);//把旋转后的图存入文件
+		imageView.setImageBitmap(bm);
+		bitmap = bm;
+		return true;
+	}
+	@OnClick(R.id.uploadConmentButton)
+	public void commentBtnListener(View view){
+//		uploadCommentsBtn.setEnabled(false);
+//		updateUIHandler.postDelayed(new Runnable() {
+//			public void run() {
+//				uploadCommentsBtn.setEnabled(true);
+//			}
+//		}, 3000);// 评论按钮延迟3秒接受下一次点击
+		uploadCommentsBtn.setEnabled(false);
+		uploadCommentsBtn.setText(COMMENTING);
+		if (commentET.getText().toString().trim().equals("")) {
+			uploadCommentsBtn.setEnabled(true);
+			uploadCommentsBtn.setText(COMMENT);
+			Toast.makeText(PhotoRecordDetailActivity.this, MyApplication.getApplication().
+					getString(R.string.comment_forbidNull), Toast.LENGTH_SHORT).show();
+		}else {
+			uploadComment();
+		}
+	}
+	@OnClick(R.id.upLoadButtonInShowDetail)
+	public void uploadPhotoListener(View view){
+		progressDialog = ProgressDialog.show(
+				PhotoRecordDetailActivity.this, MyApplication.getApplication().getString(R.string.uploadProgressDialog_title),
+				MyApplication.getApplication().getString(R.string.uploadProgressDialog_content), false, false);
+		webServer.uploadPhotoRecord(localRecordBean, uploadRC);
+	}
+	@OnClick(R.id.changeButtonInShowDetail)
+	public void changeBtnListener(View view){
+		Intent intent = new Intent(PhotoRecordDetailActivity.this,PhotoRecChangeActivity.class);
+		intent.putExtra("flag", flag);
+		intent.putExtra("recordBeanId", recordBeanId);
+		startActivityForResult(intent, DETAIL_ACTIVITY);
+	}
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.activity_photorecord_detail);
+		ViewUtils.inject(this);
+		commentDBServer = new CommentDBServer(this);
+		localRecDBServer = new LocalRecDBServer(this);
+		userDBServer = new UserDBServer(this);
+		noticeRecDBserver = new NoticeRecDBserver(this);
+		webServer = new HttpWebServer();
+		myself = userDBServer.queryMe();
+		userId = MyApplication.get("userId")+"";
+		flag = getIntent().getExtras().getString("flag");
+		recordBeanId = getIntent().getExtras().getInt("recordBeanId");
+		initView();//根据数据来源初始化不同的页面
+		if (!flag.equals("localFlag")) {
+			initComments();//初始化评论列表
+		}
+	}
+	//处理修改界面返回的结果
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		if(resultCode==RESULT_OK){
+			Bundle bundle = data.getExtras();
+			titleTV.setText(bundle.getString("title"));
+			descriptionTV.setText(bundle.getString("description"));
+			projectTV.setText(bundle.getString("project"));
+		}
+	}
+	//界面销毁时要做的处理
+	@Override
+	protected void onDestroy() {
+		// TODO Auto-generated method stub
+		//如果来源是消息中心，并且未读，那么向服务器告知已读
+		if(flag.equals("noticeFlag")){
+			if(!noticeBean.getIsRead()){
+				webServer.hadRead(userId, noticeBean.getPhotoId(), isReadRC);
+			}
+		}
+		// 先判断是否已经回收
+		if (bitmap != null && !bitmap.isRecycled()) {
+			// 回收并且置为null
+			bitmap.recycle();
+			bitmap = null;
+		}
+		System.gc();
+		super.onDestroy();
+	}
+	//初始化不同界面
+	private void initView(){
+		if (flag.equals("localFlag")) {
+//			localRecordBean = RecordLocalListAdapter.recordBeans.get(recordBeanId);
+			localRecordBean = (LocalRecordBean) getIntent().getExtras().get("bean");
+			// 本地无评论功能
+			commentTitleLayout.setVisibility(View.INVISIBLE);
+			commentContentLayout.setVisibility(View.INVISIBLE);
+			publishCommentLinearLayout.setVisibility(View.INVISIBLE);
+			// 本地未上传可以修改和上传，已上传只能修改
+			if (localRecordBean.getIsUploaded()) {
+				uploadBtn.setVisibility(View.INVISIBLE);
+			}
+			baseBean = localRecordBean;
+			initData(localRecordBean);
+		}
+		// 网络只能修改
+		else if (flag.equals("netFlag")) {
+//			netRecordBean = RecordNetListAdapter.recordBeans.get(recordBeanId);
+			netRecordBean = (NetRecordBean) getIntent().getExtras().get("bean");
+			uploadBtn.setVisibility(View.INVISIBLE);
+			baseBean = netRecordBean;
+			initData(netRecordBean);
+		}
+		// 监控按钮都关闭
+		else if (flag.equals("otherFlag")) {
+//			otherRecordBean = RecordOtherListAdapter.recordBeans.get(recordBeanId);
+			otherRecordBean = (OtherRecordBean) getIntent().getExtras().get("bean");
+			uploadBtn.setVisibility(View.INVISIBLE);
+			changeBtn.setVisibility(View.INVISIBLE);
+			baseBean = otherRecordBean;
+			initData(otherRecordBean);
+		}
+		// 监控某个人按钮功能都关闭
+		else if (flag.equals("someoneFlag")) {
+//			otherRecordBean = SomeoneListAdapter.recordBeans.get(recordBeanId);
+			otherRecordBean = (OtherRecordBean) getIntent().getExtras().get("bean");
+			uploadBtn.setVisibility(View.INVISIBLE);
+			changeBtn.setVisibility(View.INVISIBLE);
+			baseBean = otherRecordBean;
+			initData(otherRecordBean);
+			// 推送界面，只有评论按钮
+		} else if (flag.equals("noticeFlag")) {
+//			noticeBean = NoticeListAdapter.recordBeans.get(recordBeanId);
+			noticeBean = (NoticeBean) getIntent().getExtras().get("bean");
+			uploadBtn.setVisibility(View.INVISIBLE);
+			changeBtn.setVisibility(View.INVISIBLE);
+			baseBean = noticeBean;
+			initData(noticeBean);
+		}
+	}
+
+	//初始化显示的数据
+	private void initData(BaseRecordBean recordBean){
+		sdUri = recordBean.getSdUri();
+		titleTV.setText(recordBean.getTitle());
+		locationTV.setText(recordBean.getLocation());
+		projectTV.setText(recordBean.getProject());
+		photographerTV.setText(String.valueOf(recordBean.getUserName()));
+		descriptionTV.setText(recordBean.getDescription());
+		try {
+			takeTimeTV.setText(ChangeDateFormatter.changeDateFormat2(recordBean.getTakeTime()));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		bitmap = BitmapFactory.decodeFile(sdUri.substring(sdUri.lastIndexOf(":") + 1));
+		imageView.setImageBitmap(bitmap);
+	}
+	//从数据库初始化，再从网络更新
+	private void initComments(){
+			comments = (List<CommentBean>) commentDBServer.queryByPhotoId(baseBean.getPhotoId());
+				for (int i = 0; i < comments.size(); i++) {
+					TextView textView = new TextView(PhotoRecordDetailActivity.this);
+					textView.setId(i);
+					textView.setText("    "+ comments.get(i).getUserName()+ "："+ comments.get(i).getContent()
+							+ "  "+MyApplication.getApplication().getString(R.string.commonVocabulary_leftBracket)
+							+ ChangeDateFormatter.changeDateFormatForComment(comments.get(i).getTime()) + MyApplication.getApplication().getString(R.string.commonVocabulary_rightBracket));
+					commentContentLayout.addView(textView);
+				}
+			webServer.getCommentBeans(baseBean.getPhotoId(), getCommentsRC);
+	}
+	//上传一条评论
+	@SuppressLint("SimpleDateFormat")
+	private void uploadComment(){
+		commentBean = new CommentBean();
+		commentBean.setContent(commentET.getText() + "");
+		commentBean.setPhotoId(baseBean.getPhotoId());
+		commentBean.setId(UUID.randomUUID() + "");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		commentBean.setTime(dateFormat.format(new Date(System.currentTimeMillis())));
+		commentBean.setUserId(userId);
+		commentBean.setUserName(myself.getName());
+		webServer.uploadComment(commentBean, uploadCommentRC);
+	}
+	//上传记录web请求结果处理
+	private RequestCallBack<String> uploadRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			progressDialog.dismiss();
+			Toast.makeText(PhotoRecordDetailActivity.this, MyApplication.getApplication().
+					getString(R.string.upload_fail), Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			progressDialog.dismiss();
+			//上传成功，存入本地数据库
+			if( JsonParseUtils.jsonToBoolean(arg0.result)){
+				Toast.makeText(PhotoRecordDetailActivity.this, MyApplication.getApplication().
+						getString(R.string.upload_success), Toast.LENGTH_SHORT).show();
+				localRecordBean.setIsUploaded(true);
+				localRecDBServer.addOrUpdate(localRecordBean);
+				PhotoRecordDetailActivity.this.finish();
+			}else {
+				Toast.makeText(PhotoRecordDetailActivity.this, MyApplication.getApplication().
+						getString(R.string.upload_fail), Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+	//获取图片评论web请求结果处理
+	private RequestCallBack<String> getCommentsRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+
+			List<CommentBean> list = (List<CommentBean>) JsonParseUtils.jsonToList(arg0.result, CommentBean.class);
+			if(comments.size()>0){			//将得到的记录原来没有的部分拼接到评论列表，并更新列表数据
+				List<CommentBean> newList = list.subList(comments.size(), list.size());
+				if(newList.size()>0){
+					for (int i = 0; i<newList.size(); i++) {
+						TextView textView = new TextView(PhotoRecordDetailActivity.this);
+						textView.setId(i+comments.size()-1);
+						textView.setText("    "+ newList.get(i).getUserName()+ "："+ newList.get(i).getContent()
+								+ "  "+MyApplication.getApplication().getString(R.string.commonVocabulary_leftBracket)
+								+ ChangeDateFormatter.changeDateFormatForComment(newList.get(i).getTime()) + MyApplication.getApplication().getString(R.string.commonVocabulary_rightBracket));
+//						textView.setOnClickListener(new CommentOnclickListener());//预留的回复点击监听
+						commentContentLayout.addView(textView);
+					}
+					commentDBServer.addListOrUpdate(newList);//加入数据库
+					comments.addAll(newList);
+				}
+			}else {			//将网络获取的全部记录显示，并更新数据库
+				for (int i = 0; i<list.size(); i++) {
+					TextView textView = new TextView(PhotoRecordDetailActivity.this);
+					textView.setId(i);
+					textView.setText("    "+ list.get(i).getUserName()+ "："+ list.get(i).getContent()
+							+ "  "+MyApplication.getApplication().getString(R.string.commonVocabulary_leftBracket)
+							+ ChangeDateFormatter.changeDateFormatForComment(list.get(i).getTime()) + MyApplication.getApplication().getString(R.string.commonVocabulary_rightBracket));
+//					textView.setOnClickListener(new CommentOnclickListener());//预留的回复点击监听
+					commentContentLayout.addView(textView);
+				}
+				commentDBServer.addList(list);
+				comments.addAll(list);
+			}
+		}
+	};
+	//上传图片评论的接口
+	private RequestCallBack<String> uploadCommentRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			uploadCommentsBtn.setEnabled(true);
+			uploadCommentsBtn.setText(COMMENT);
+			Toast.makeText(PhotoRecordDetailActivity.this, COMMENTFAIL, Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			uploadCommentsBtn.setEnabled(true);
+			uploadCommentsBtn.setText(COMMENT);
+			String uploadTime = JsonParseUtils.jsonToString(arg0.result, "timeStr");
+			if(!uploadTime.equals("")){
+				commentBean.setTime(uploadTime);
+				comments.add(commentBean);
+				commentET.setText("");
+				TextView textView = new TextView(PhotoRecordDetailActivity.this);
+//				textView.setOnClickListener(new CommentOnclickListener());
+				textView.setText("    "+ commentBean.getUserName()+ "： "
+						+ commentBean.getContent()+ "  "+MyApplication.getApplication().getString(R.string.commonVocabulary_leftBracket)
+						+ ChangeDateFormatter.changeDateFormatForComment(commentBean.getTime()) + MyApplication.getApplication().getString(R.string.commonVocabulary_rightBracket));
+				commentContentLayout.addView(textView);
+				commentDBServer.add(commentBean);
+			}
+		}
+	};
+	//告知服务器这条记录的评论已读
+	private RequestCallBack<String> isReadRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Log.e("cxmcxm", arg1);
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			//如果告知已读成功，更新数据库,刷新cookie里面的noticeNum数据
+			if(JsonParseUtils.jsonToBoolean(arg0.result)){
+				noticeBean.setIsRead(true);
+				noticeRecDBserver.updateOne(noticeBean);
+//				if(noticeNum>0){
+//					--noticeNum;
+//					MyCookie.putString("noticeNum", noticeNum+"");
+//					//更新抽屉里显示的消息数，因为是网络请求 有一点点延迟
+//					if(MainActivity.mNavDrawerItems!=null&&MainActivity.mAdapter!=null){
+//						MainActivity.mNavDrawerItems.get(1).setCount(noticeNum+"");
+//						MainActivity.mAdapter.notifyDataSetChanged();
+//					}
+//				}
+				//更改抽屉显示的消息数
+				if(MainActivity.mNavDrawerItems!=null&&MainActivity.mAdapter!=null){
+					MainActivity.mNavDrawerItems.get(1).setCount(noticeRecDBserver.queryAllNotRead().size()+"");
+					MainActivity.mAdapter.notifyDataSetChanged();
+			}
+			}
+		}
+	};
+	private static Handler updateUIHandler = new Handler(){};
+}

@@ -1,0 +1,37 @@
+package com.neu.findme.utils;
+
+
+import java.io.File;
+
+import android.os.Environment;
+
+/**
+ * @author cxm
+ *提供一些常用存储路径的String常量
+ *提供删除文件夹等方法
+ *2015-03-11 15:48:103
+ */
+public class FileUtil {
+	// 文件的存储路径
+	public static final String BASE_PATH = Environment.getExternalStorageDirectory().toString()+ File.separator+ "findMe" + File.separator;
+	public static final String OTHER_PATH = BASE_PATH+"other"+File.separator; 
+	public static final String RECORD_PATH = BASE_PATH+"record"+File.separator; 
+	public static final String NET_PATH = BASE_PATH+"net"+File.separator; 
+	public static final String SOMEONE_PATH = BASE_PATH+"someone"+File.separator; 
+	public static final String HEADIMAGE_PATH = BASE_PATH+"headimage"+File.separator;
+	public static final String APK_PATH = BASE_PATH +"apk"+File.separator;
+	//删除一个文件夹
+	public static void deleteFiles(File file){ 
+		   if(file.exists()){                    //判断文件是否存在
+		    if(file.isFile()){                    //判断是否是文件
+		     file.delete();                      
+		    }else if(file.isDirectory()){              //否则如果它是一个目录
+		     File files[] = file.listFiles();               //声明目录下所有的文件 files[];
+		     for(int i=0;i<files.length;i++){            //遍历目录下所有的文件
+		     deleteFiles(files[i]);             //把每个文件 用这个方法进行迭代
+		     } 
+		    } 
+		    file.delete(); 
+		   }
+		} 
+}

@@ -1,0 +1,102 @@
+package com.neu.findme.utils;
+
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
+import android.text.format.Time;
+
+/**
+ * @author cxm
+ *一些常用的时间格式的转换方法
+ *2015-03-11 15:48:56
+ */
+public class ChangeDateFormatter {
+
+	/*
+	 * 定义时间格式
+	 */
+	static SimpleDateFormat formatter0 = new SimpleDateFormat(
+			"yyyy年MM月dd日 HH:mm:ss");
+	static SimpleDateFormat formatter1 = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm:ss");
+	static SimpleDateFormat formatter2 = new SimpleDateFormat("yyyyMMddHHmmss");
+	static SimpleDateFormat formatter3 = new SimpleDateFormat("yyyyMMdd");
+	static SimpleDateFormat formatter4 = new SimpleDateFormat("yyyy年MM月dd日");
+
+	/*
+	 * 将 "yyyyMMddHHmmss"转换为"yyyy-MM-dd HH:mm:ss"
+	 */
+	public static String changeDateFormat1(String beforeChangeStr)
+			throws ParseException {
+		if (beforeChangeStr == null) {
+			return null;
+		}
+		return formatter1.format(formatter2.parse(beforeChangeStr));
+	}
+
+	/*
+	 * 将 "yyyyMMddHHmmss"转换为"yyyy年MM月dd日 HH:mm:ss"
+	 */
+	public static String changeDateFormat2(String beforeChangeStr)
+			throws ParseException {
+		if (beforeChangeStr == null) {
+			return null;
+		}
+		return formatter0.format(formatter2.parse(beforeChangeStr));
+	}
+	
+	/*
+	 * 将 "yyyyMMdd"转换为"yyyy年MM月dd日"
+	 */
+	public static String changeDateFormat4(String beforeChangeStr)
+			throws ParseException {
+		if (beforeChangeStr == null) {
+			return null;
+		}
+		return formatter4.format(formatter3.parse(beforeChangeStr));
+	}
+
+	public static String changeDateFormatForComment(String beforeChangeStr) {
+		try {
+			return changeDateFormat1(beforeChangeStr).substring(5, 16);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+
+	}
+	/*
+	 * 获取系统时间,上传，拍照
+	 */
+	public static String getNowTimeForUpload() {
+		Time t = new Time(); // or Time t=new Time("GMT+8"); 加上Time Zone资料。
+		t.setToNow(); // 取得系统时间。
+		int year = t.year;
+		int month = t.month;
+		int date = t.monthDay;
+		int hour = t.hour; // 0-23
+		int minute = t.minute;
+		int second = t.second;
+		String monthString = String.valueOf(month);
+		String dateString = String.valueOf(date);
+		String hourString = String.valueOf(hour);
+		String minuteString = String.valueOf(minute);
+		String secondString = String.valueOf(second);
+		if (monthString.length() == 1)
+			monthString = "0" + monthString;
+		if (dateString.length() == 1)
+			dateString = "0" + dateString;
+		if (hourString.length() == 1)
+			hourString = "0" + hourString;
+		if (minuteString.length() == 1)
+			minuteString = "0" + minuteString;
+		if (secondString.length() == 1)
+			secondString = "0" + secondString;
+		String time = year + "" + monthString + dateString
+				+ hourString + minuteString + secondString;
+		return time;
+	}
+
+}

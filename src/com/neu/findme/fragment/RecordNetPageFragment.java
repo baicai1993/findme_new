@@ -1,0 +1,227 @@
+package com.neu.findme.fragment;
+
+
+import java.io.File;
+import java.util.List;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnItemClick;
+import com.neu.findme.R;
+import com.neu.findme.activity.PhotoRecordDetailActivity;
+import com.neu.findme.adapter.RecordNetListAdapter;
+import com.neu.findme.domain.NetRecordBean;
+import com.neu.findme.server_db.NetRecDBServer;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.userInterface.PullDownFreshInterface;
+import com.neu.findme.userInterface.PullUpFreshInterface;
+import com.neu.findme.utils.FileUtil;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+import com.neu.findme.view.PullToRefreshView;
+
+/**
+ * @author cxm
+ *用户上传到网路的照片记录管理界面，下拉可以刷新最新上传的记录，上拉可以刷新出以前的记录
+ *2015-03-11 15:38:55
+ */
+public class RecordNetPageFragment extends Fragment implements PullDownFreshInterface,PullUpFreshInterface{
+	private NetRecDBServer dbServer;
+	private HttpWebServer webServer;
+	@ViewInject(R.id.listView)
+	private ListView listView;
+	
+	public static RecordNetListAdapter listViewAdapter;
+	//上下拉刷新相关
+	@ViewInject(R.id.pullRefreshBar)
+	private PullToRefreshView pullRefreshBar;
+	//用户id
+	private String userId; 
+	@OnItemClick(R.id.listView)
+	public void listItemListener(AdapterView<?> parent, View view,int position, long id){
+		Intent intent = new Intent(getActivity(),PhotoRecordDetailActivity.class);
+		intent.putExtra("recordBeanId", position);
+		intent.putExtra("bean", RecordNetListAdapter.recordBeans.get(position));
+		intent.putExtra("flag", "netFlag");
+		startActivity(intent);
+	}
+	@Override
+	public View onCreateView(LayoutInflater inflater,
+			ViewGroup container,  Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		View view = inflater.inflate(R.layout.fragment_record_net_page, container,false);
+		ViewUtils.inject(this,view);//注入view和事件
+		dbServer = new NetRecDBServer(getActivity());
+		webServer = new HttpWebServer();
+		pullRefreshBar.PullDownParent = this;
+		pullRefreshBar.PullUpParent = this;
+		initListViewData();//初始化列表数据
+		listView.setAdapter(listViewAdapter);
+		return view;
+	}
+	
+	@Override
+	public void onResume() {
+		// TODO Auto-generated method stub
+		if(listViewAdapter!=null){
+			listViewAdapter.notifyDataSetChanged();
+		}
+		super.onResume();
+	}
+	
+	@Override
+	public void onDestroy() {
+		// TODO Auto-generated method stub
+		listViewAdapter = null;
+		super.onDestroy();
+	}
+	private void initListViewData(){
+		//从数据库中读取，如果数据库没有记录，从服务器下载
+		userId = MyApplication.get("userId")+"";
+		List<NetRecordBean> list = (List<NetRecordBean>) dbServer.queryTopNOrderBy(NetRecordBean.class, 10, "takeTime", true);
+		if(list.size()>0){
+			listViewAdapter = new RecordNetListAdapter(getActivity(), list);
+		}else {
+			webServer.getNetPhotoRecords(1, userId, getRecordBeansRC);
+		}
+	}
+	private void downloadPhoto(NetRecordBean bean){
+		bean.setSdUri(FileUtil.NET_PATH+userId+File.separator+bean.getPhotoId());
+		if(!(new File(bean.getSdUri().toString().substring(bean.getSdUri().toString().indexOf(":")+1)).exists())){
+			webServer.downloadPhoto(downloadPhotoRC, bean.getPhotoId(), bean.getSdUri());
+		}
+	}
+	//上拉下拉时调用的方法
+	@Override
+	public void PullUpFresh() {
+		// TODO Auto-generated method stub
+		if(RecordNetListAdapter.recordBeans.size()==0){
+			webServer.getNetPhotoRecords(1, userId, getRecordBeansRC);
+		}else {
+			webServer.getNetPhotoBeansBefore(RecordNetListAdapter.recordBeans.
+					get(RecordNetListAdapter.recordBeans.size()-1).getUpLoadedTime(), userId, pullUpRC);
+		}
+	}
+	@Override
+	public void PullDownFresh() {
+		// TODO Auto-generated method stub
+		if(RecordNetListAdapter.recordBeans.size()==0){
+			webServer.getNetPhotoRecords(1, userId, getRecordBeansRC);
+		}else {
+			webServer.getNetPhotoBeansAfter(RecordNetListAdapter.recordBeans.get(0).getUpLoadedTime(), userId, pullDownRC);
+		}
+	}
+	//加载服务器第一页的记录
+	private RequestCallBack<String> getRecordBeansRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Log.e("cxmcxm", arg1);
+			pullRefreshBar.onHeaderRefreshComplete();
+		}
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			pullRefreshBar.onHeaderRefreshComplete();
+			List<NetRecordBean> list = (List<NetRecordBean>) JsonParseUtils.jsonToEntitylist(arg0.result, NetRecordBean.class);
+			if(list.size()>0){
+				//更新列表内数据的sdUri
+				for(NetRecordBean bean:list){
+					downloadPhoto(bean);
+				}
+				listViewAdapter = new RecordNetListAdapter(getActivity(), list);
+				listView.setAdapter(listViewAdapter);
+				dbServer.addListOrUpdate(list);//加入数据库
+			}
+		}
+	};
+
+	//下拉时加载记录
+	private RequestCallBack<String> pullDownRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			pullRefreshBar.onHeaderRefreshComplete();
+			Toast.makeText(getActivity(), MyApplication.getApplication().
+					getString(R.string.refresh_fail), Toast.LENGTH_SHORT).show();
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			pullRefreshBar.onHeaderRefreshComplete();
+			List<NetRecordBean> list = (List<NetRecordBean>) JsonParseUtils.jsonToEntitylist(arg0.result, NetRecordBean.class);
+			//更新每条记录的sdUri
+			if(list.size()>0){
+				RecordNetListAdapter.recordBeans.addAll(0, list);
+				listViewAdapter.notifyDataSetChanged();
+			for(NetRecordBean bean:RecordNetListAdapter.recordBeans){
+				downloadPhoto(bean);
+			}
+				dbServer.addListOrUpdate(list);//加入数据库
+			}else {
+				Toast.makeText(getActivity(), MyApplication.getApplication().
+						getString(R.string.refresh_newest), Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+	//上拉时加载记录
+	private RequestCallBack<String> pullUpRC = new RequestCallBack<String>() {
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			pullRefreshBar.onFooterRefreshComplete();
+			Toast.makeText(getActivity(), MyApplication.getApplication().
+					getString(R.string.refresh_fail), Toast.LENGTH_SHORT).show();
+		}
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			pullRefreshBar.onFooterRefreshComplete();
+			List<NetRecordBean> list = (List<NetRecordBean>) JsonParseUtils.jsonToEntitylist(arg0.result, NetRecordBean.class);
+			if(list.size()>0){
+				RecordNetListAdapter.recordBeans.addAll(RecordNetListAdapter.recordBeans.size(), list);
+				listViewAdapter.notifyDataSetChanged();
+			for(NetRecordBean bean:RecordNetListAdapter.recordBeans){
+				downloadPhoto(bean);
+			}
+				dbServer.addListOrUpdate(list);//加入数据库
+			}else {
+				Toast.makeText(getActivity(), MyApplication.getApplication().
+						getString(R.string.refresh_noMoreOld), Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+	private RequestCallBack<File> downloadPhotoRC = new RequestCallBack<File>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Log.e("cxmcxm", arg1);
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<File> arg0) {
+			// TODO Auto-generated method stub
+			listViewAdapter.notifyDataSetChanged();
+		}
+	};
+}

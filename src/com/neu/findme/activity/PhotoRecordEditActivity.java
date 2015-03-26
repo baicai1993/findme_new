@@ -1,0 +1,339 @@
+package com.neu.findme.activity;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.neu.findme.R;
+import com.neu.findme.adapter.RecordLocalListAdapter;
+import com.neu.findme.domain.LocalRecordBean;
+import com.neu.findme.domain.UnfinishProject;
+import com.neu.findme.domain.UserBean;
+import com.neu.findme.fragment.RecordManageFragment;
+import com.neu.findme.server_db.UnfinishProjectDBServer;
+import com.neu.findme.server_db.UserDBServer;
+import com.neu.findme.server_locate.AmapLocateServer;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.utils.BitmapUtil;
+import com.neu.findme.utils.ChangeDateFormatter;
+import com.neu.findme.utils.ChangeImageTools;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+import com.neu.findme.view.MyAlertDialog;
+
+/**
+ * @author cxm
+ *拍照之后进入的界面，如果地理位置没有正常获取，会重新定位一次，右上角可以翻转照片
+ *不上传直接退出会根据用户选择决定是否保留到本地记录
+ *上传后照片会刷新本地列表，不刷新网络列表
+ *2015-03-09 20:42:59
+ */
+public class PhotoRecordEditActivity extends Activity {
+	@ViewInject(R.id.timeContentText)
+	private TextView timeTextView;
+	@ViewInject(R.id.localContentText)
+	private TextView locationTextView;
+	@ViewInject(R.id.hdpiPictrueView)
+	private ImageView picImageView;
+	@ViewInject(R.id.pictureDescription)
+	private EditText descriptionText;
+	@ViewInject(R.id.titleContentText)
+	private EditText titleTextView;
+	@ViewInject(R.id.photographerContentText)
+	private TextView photographerTextView;
+	@ViewInject(R.id.upLoadButtonInEditUpload)
+	private Button uploadBtn;
+	@ViewInject(R.id.rotateButton)
+	private Button rotateButton;
+	@ViewInject(R.id.editBackButton)
+	private Button backBtn;
+	//spinner相关
+	@ViewInject(R.id.job_category_spinner)
+	private Spinner spinner;
+	private ArrayAdapter<String> adapter;
+	private List<UnfinishProject> projects;
+	//数据库相关
+	private UnfinishProjectDBServer dbServer;
+	private UserDBServer userDBServer;
+	private UserBean myself;
+	//上一个Activity传递的数据
+	private String sdUri;  
+	private String photoName;
+	private String locationStr;
+	//照片相关
+	private Bitmap bitmap;
+	//网络相关
+	private ProgressDialog progressDialog = null;
+	private HttpWebServer webServer; 
+	private LocalRecordBean bean;
+	//按钮监听方法
+	@OnClick({R.id.upLoadButtonInEditUpload,R.id.rotateButton,R.id.editBackButton})
+	public void OnclickListener(View view){
+		switch (view.getId()) {
+		case R.id.upLoadButtonInEditUpload:
+			progressDialog = ProgressDialog.show(
+					PhotoRecordEditActivity.this, MyApplication.getApplication().getString(R.string.uploadProgressDialog_title),
+					MyApplication.getApplication().getString(R.string.uploadProgressDialog_content), false, false);
+			createBean();
+			webServer.uploadPhotoRecord(bean, uploadRecordBeanRC);
+			break;
+		case R.id.rotateButton:
+			Bitmap tempBitmap = ChangeImageTools.rotateImage(bitmap, 90);//每点击一次旋转90度
+			BitmapUtil.saveBmpToSd(tempBitmap, sdUri.substring(sdUri.lastIndexOf(":") + 1), 100);//把旋转后的图存入文件
+			picImageView.setImageBitmap(tempBitmap);
+			bitmap = tempBitmap;
+			break;
+		case R.id.editBackButton:
+			quit();
+			break;
+		default:
+			break;
+		}
+	}
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);// 设置没有应用名称标题栏
+		setContentView(R.layout.activity_photorecord_edit);
+		ViewUtils.inject(this);//注入事件
+		dbServer = new UnfinishProjectDBServer(this);
+		userDBServer = new UserDBServer(this);
+		webServer = new HttpWebServer();
+		myself = userDBServer.queryMe();
+		getIntentData();
+		initWidget();
+		//如果之前没获取到地理位置 这个节目重新定位一次
+		if(locationTextView.getText().equals(MyApplication.getApplication().getString(R.string.location_timeout))){
+			getLocation();
+		}
+	}
+	
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		//页面从后台恢复重新刷新地理位置
+		getLocation();
+		super.onResume();
+	}
+
+	@Override
+	protected void onDestroy() {
+		// 先判断是否已经回收
+		if (bitmap != null && !bitmap.isRecycled()) {
+			// 回收并且置为null
+			bitmap.recycle();
+			bitmap = null;
+		}
+		System.gc();
+		super.onDestroy();
+	}
+
+	// 点击返回键时的操作
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+			quit();
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	//获取intent数据
+	private void getIntentData(){
+		Intent intent  = getIntent();
+		sdUri = intent.getExtras().getString("sdUri");
+		photoName = intent.getExtras().getString("photoName");
+		locationStr = intent.getExtras().getString("locationStr");
+	}
+	//将用户最后填写的信息包装成bean
+	private void createBean(){
+		bean = new LocalRecordBean();
+		bean.setPhotoId(photoName);
+		bean.setLocation(locationTextView.getText()+"");
+		bean.setIsPubilc(1);
+		bean.setDescription(descriptionText.getText().toString());
+		bean.setUserId(Long.parseLong(myself.getId()));
+		bean.setUserName(myself.getName());
+		bean.setIsUploaded(false);
+		bean.setUpLoadedTime(ChangeDateFormatter.getNowTimeForUpload());
+		String fileName = getIntent().getStringExtra("photoName");
+		bean.setTakeTime(fileName.substring(fileName.indexOf("_") + 1,fileName.indexOf(".")));
+		bean.setLatitude(RecordManageFragment.getLatitude());
+		bean.setLongitude(RecordManageFragment.getLongitude());
+		bean.setSdUri(sdUri);
+		bean.setTitle(titleTextView.getText().toString());
+		bean.setProject(spinner.getSelectedItem().toString());
+	}
+	// 点击返回按钮或者手机的返回功能键
+	private void quit() {
+		//弹出对话框 提示放弃记录还是存为本地，如果点击确定，照片数据会存入数据库，否则，直接finish
+		MyAlertDialog myAlertDialog = new MyAlertDialog(this);
+		myAlertDialog.showWoodDialog(true);
+		myAlertDialog.getDialog_title().setText(MyApplication.getApplication().getString(R.string.recordEditDialog_tittle));
+		myAlertDialog.getDialog_msg().setText(MyApplication.getApplication().getString(R.string.recordEditDialog_content));
+		myAlertDialog.getPosButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				createBean();
+				//存入本地数据库，更新本地列表
+				if(dbServer.addOrUpdate(bean)){
+					RecordLocalListAdapter.recordBeans.add(0, bean);
+				}
+				PhotoRecordEditActivity.this.finish();
+				overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
+			}
+		});
+		myAlertDialog.getNevButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				PhotoRecordEditActivity.this.finish();
+				overridePendingTransition(R.anim.push_right_in, R.anim.push_right_out);
+			}
+		});
+
+		}
+	private void initWidget(){
+		initSpinner();
+		bitmap = BitmapFactory.decodeFile(sdUri.substring(sdUri.lastIndexOf(":") + 1));
+		picImageView.setImageBitmap(bitmap);
+		photographerTextView.setText(myself.getName());
+		timeTextView.setText(getTakeTime());
+		locationTextView.setText(locationStr);
+	}
+	//初始化spinner
+	private void initSpinner(){
+		projects = dbServer.queryAll(UnfinishProject.class);
+		ArrayList<String> projectNames = new ArrayList<String>();
+		for(UnfinishProject unfinishProject:projects){
+			projectNames.add(unfinishProject.getProjectName());
+		}
+		adapter = new ArrayAdapter<String>(this,android.R.layout.simple_spinner_item, projectNames);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+		spinner.setOnItemSelectedListener(new Spinner.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> arg0, View arg1,
+					int arg2, long arg3) {
+				// TODO Auto-generated method stub
+//				String str = arg0.getItemAtPosition(arg2).toString();
+				arg0.setVisibility(View.VISIBLE);
+			}
+			@Override
+			public void onNothingSelected(AdapterView<?> arg0) {
+				// TODO Auto-generated method stub
+				arg0.setVisibility(View.VISIBLE);
+			}
+		});
+	};
+	//定位方法
+	private void getLocation(){
+			new AmapLocateServer().startLocate(PhotoRecordEditActivity.this);
+			new Thread(new Runnable() {
+				@Override
+				public void run() {
+					// TODO Auto-generated method stub
+					Looper.prepare();
+					int i = 5;
+					while(i>0){
+						final String location = AmapLocateServer.getLocationStr()+"";
+						if(!location.equals("")&&!location.equals(MyApplication.getApplication().getString(R.string.location_timeout))&&!location.equals("null")){
+							updateUIHandler.post(new Runnable() {
+								public void run() {
+									locationTextView.setText(location);
+								}
+							});
+							break;
+						}
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						i--;
+					}
+				}
+			}).start();
+	}
+	//获取可展示的系统时间
+	public String getTakeTime() {
+		String fileName = getIntent().getStringExtra("photoName");
+		int tem = fileName.indexOf("_") + 1;
+		String time = fileName.substring(tem, fileName.length());
+		String year = time.substring(0, 4);
+		String month = time.substring(4, 6);
+		String date = time.substring(6, 8);
+		String hour = time.substring(8, 10); // 0-23
+		String minute = time.substring(10, 12);
+		String second = time.substring(12, 14);
+		String timeStr = year + MyApplication.getApplication().getString(R.string.commonVocabulary_year) + month +
+				MyApplication.getApplication().getString(R.string.commonVocabulary_month)
+				+ date + MyApplication.getApplication().getString(R.string.commonVocabulary_day)
+				+ hour + ":" + minute + ":" + second;
+		return timeStr;
+	}
+
+	//上传照片记录的web请求结果处理
+	RequestCallBack<String> uploadRecordBeanRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			progressDialog.dismiss();
+			Log.e("cxmcxm", arg1);
+			Toast.makeText(PhotoRecordEditActivity.this, MyApplication.getApplication().
+					getString(R.string.upload_fail), Toast.LENGTH_SHORT).show();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			progressDialog.dismiss();
+			//上传成功，存入本地数据库
+			if( JsonParseUtils.jsonToBoolean(arg0.result)){
+				Toast.makeText(PhotoRecordEditActivity.this, MyApplication.getApplication().
+						getString(R.string.upload_success), Toast.LENGTH_SHORT).show();
+				bean.setIsUploaded(true);
+				RecordLocalListAdapter.recordBeans.add(0, bean);//更新数据源
+				dbServer.addOrUpdate(bean);
+				PhotoRecordEditActivity.this.finish();
+			}else {
+				Toast.makeText(PhotoRecordEditActivity.this, MyApplication.getApplication().
+						getString(R.string.upload_fail), Toast.LENGTH_SHORT).show();
+			}
+		}
+	};
+	private static Handler updateUIHandler = new Handler();
+}

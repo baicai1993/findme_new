@@ -1,0 +1,23 @@
+package com.neu.findme.adapter;
+
+
+import java.util.List;
+
+import com.neu.findme.domain.OtherRecordBean;
+
+import android.content.Context;
+
+/**
+ * @author fty
+ *查看某人界面的列表适配器，继承自RecordOtherListAdapter
+ *2015-03-09 20:58:10
+ */
+public class SomeoneListAdapter extends RecordOtherListAdapter{
+
+	public SomeoneListAdapter(Context context, List<OtherRecordBean> recordBeans) {
+		// TODO Auto-generated constructor stub
+		this.context = context;
+		SomeoneListAdapter.recordBeans = recordBeans;
+	}
+	
+}

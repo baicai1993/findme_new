@@ -1,0 +1,91 @@
+package com.neu.findme.view;
+
+
+import android.app.AlertDialog;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.neu.findme.R;
+
+/**
+ * @author cxm
+ *快捷提供自定义木质风格的dialog的类
+ *2015-03-09 21:14:09
+ */
+public class MyAlertDialog extends AlertDialog  implements Button.OnClickListener{
+	private Context context;
+	private RelativeLayout layout;//dialog的布局
+	private TextView dialog_msg;//dialog的内容
+	private TextView dialog_title;//dialog的标题
+	private Button okButton;//积极的按钮
+	private Button cancelButton;//消极的按钮
+	private  AlertDialog dialog; //标准的dialog
+	public MyAlertDialog(Context context) {
+		super(context);
+		this.context = context;
+	}
+	//返回木质风格的dialog
+	public AlertDialog showWoodDialog(boolean isCancelble){
+		layout = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.view_mydialog, new RelativeLayout(context));
+		dialog = new AlertDialog.Builder(context).create();//初始化一个标准的dialog
+		dialog.show();
+		dialog.getWindow().setContentView(layout);
+		dialog.setCancelable(isCancelble);
+		dialog_title = (TextView) layout.findViewById(R.id.dialog_title);
+		dialog_msg = (TextView) layout.findViewById(R.id.dialog_msg);
+		okButton = (Button)layout.findViewById(R.id.dialog_ok);
+		cancelButton = (Button) layout.findViewById(R.id.dialog_cancel);
+		cancelButton.setOnClickListener(this);
+		return dialog;
+	}
+	//返回一个自定义的dialog
+	public AlertDialog showDialog(int relativeLayout,int titleTextView,int contentTextView,int posButton,int negButton,boolean isCancelble) {
+		layout = (RelativeLayout) LayoutInflater.from(context).inflate(relativeLayout, null);
+		dialog = new AlertDialog.Builder(context).create();//初始化一个标准的dialog
+		dialog.show();
+		dialog.getWindow().setContentView(layout);
+		dialog.setCancelable(isCancelble);
+		dialog_title = (TextView) layout.findViewById(titleTextView);
+		dialog_msg = (TextView) layout.findViewById(contentTextView);
+		okButton = (Button)layout.findViewById(posButton);
+		cancelButton = (Button) layout.findViewById(negButton);
+		return dialog;
+	}
+
+	//返回标准dialog
+	public AlertDialog getSimpleDialog() {
+		dialog = new AlertDialog.Builder(context).create();//初始化一个标准的dialog
+		return dialog;
+	}
+	//控制dialog消失
+	public void dismiss(){
+		if(dialog!=null){
+			dialog.dismiss();
+		}
+	}
+	//获取dialog的内容 
+	public TextView getDialog_msg() {
+		return dialog_msg;
+	}
+	//获取dialog的标题
+	public TextView getDialog_title() {
+		return dialog_title;
+	}
+	//获取dialog的积极按钮
+	public Button getPosButton() {
+		return okButton;
+	}
+	//获取dialog的消极按钮
+	public Button getNevButton() {
+		return cancelButton;
+	}
+	@Override
+	public void onClick(View v) {
+		// TODO Auto-generated method stub
+		dialog.dismiss();
+	}
+}

@@ -1,0 +1,34 @@
+package com.neu.findme.server_db;
+
+
+import java.util.List;
+
+import android.content.Context;
+
+import com.lidroid.xutils.DbUtils;
+import com.neu.findme.domain.LocalRecordBean;
+/**
+ * @author fty
+ *本地记录数据库服务
+ *2015-03-09 21:53:16
+ */
+public class LocalRecDBServer extends BaseDBServer {
+	public LocalRecDBServer(Context context){
+		dbUtils = DbUtils.create(context);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<LocalRecordBean> queryAllOrderBy(Class<?> type, String columnName,boolean desc) {
+		// TODO Auto-generated method stub
+		return (List<LocalRecordBean>) super.queryAllOrderBy(type, columnName,desc);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<LocalRecordBean> queryTopNOrderBy(Class<?> type, int end, String columnName,boolean desc) {
+		// TODO Auto-generated method stub
+		return (List<LocalRecordBean>) super.queryTopNOrderBy(type, end, columnName,desc);
+	}
+	
+}

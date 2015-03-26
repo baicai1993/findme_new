@@ -1,0 +1,357 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/showDetailLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_white"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/headerLinearLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="50dip"
+        android:background="@drawable/bg_wooden_bottom"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/showDetailBackButton"
+            android:layout_width="40dip"
+            android:layout_height="30dip"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:background="@anim/btn_back" />
+
+        <TextView
+            android:id="@+id/main_title"
+            android:layout_width="wrap_content"
+            android:layout_height="45dip"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginTop="5dp"
+            android:paddingTop="7dp"
+            android:text="@string/description"
+            android:textSize="20sp" />
+
+    </RelativeLayout>
+
+    <!-- 中间的导航条开始 -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_marginTop="50dp"
+        android:background="@drawable/bg_wooden2" >
+
+        <ScrollView
+            android:id="@+id/informationScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
+            android:scrollbars="none" >
+
+            <LinearLayout
+                android:id="@+id/informationLinearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="248dp"
+                android:layout_marginBottom="0dp"
+                android:layout_marginTop="0dp"
+                android:orientation="vertical" >
+
+                <FrameLayout
+                    android:id="@+id/headerFrameLayout"
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dip"
+                    android:background="@drawable/bg_translucent_gray" >
+
+                    <TextView
+                        android:id="@+id/hdpiPictrueTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="10dip"
+                        android:paddingTop="10dip"
+                        android:text="@string/HD_picture" />
+                </FrameLayout>
+
+                <ImageView
+                    android:id="@+id/hdpiPictrueView"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginTop="10dip"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_loading" />
+
+                <FrameLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dip"
+                    android:background="@drawable/bg_translucent_gray" >
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" >
+
+                        <TextView
+                            android:id="@+id/pictureDetailText_workClass"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="10dip"
+                            android:paddingTop="10dip"
+                            android:text="@string/job_classification" />
+
+                        <TextView
+                            android:id="@+id/pictureDetailEdit_workClass"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="30dip"
+                            android:paddingTop="10dip"
+                            android:text="@string/job_classification"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <FrameLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dip"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_translucent_gray" >
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" >
+
+                        <TextView
+                            android:id="@+id/pictureDetailText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="10dip"
+                            android:paddingTop="10dip"
+                            android:text="@string/photo_info" />
+
+                        <TextView
+                            android:id="@+id/titleContentText1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:paddingLeft="30dip"
+                            android:paddingTop="10dip"
+                            android:text=""
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/timeView"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginLeft="10dp"
+                        android:src="@drawable/ic_time" />
+
+                    <TextView
+                        android:id="@+id/timeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:paddingLeft="10dip"
+                        android:text="@string/time" />
+
+                    <TextView
+                        android:id="@+id/takeTimeContentText1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:paddingLeft="20dip"
+                        android:text="@string/concrete_time" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/localView"
+                        android:layout_width="16dip"
+                        android:layout_height="16dip"
+                        android:layout_marginLeft="10dp"
+                        android:src="@drawable/ic_local" />
+
+                    <TextView
+                        android:id="@+id/locationText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:paddingLeft="10dip"
+                        android:text="@string/place" />
+
+                    <TextView
+                        android:id="@+id/locationContentText1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="20dip"
+                        android:text="@string/concrete_place" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="horizontal" >
+
+                    <ImageView
+                        android:id="@+id/photographerView"
+                        android:layout_width="16dip"
+                        android:layout_height="16dip"
+                        android:layout_marginLeft="10dp"
+                        android:src="@drawable/ic_user" />
+
+                    <TextView
+                        android:id="@+id/photographerText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:paddingLeft="10dip"
+                        android:text="@string/photographer" />
+
+                    <TextView
+                        android:id="@+id/photographerContentText1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:paddingLeft="20dip"
+                        android:text="" />
+                </LinearLayout>
+
+                <FrameLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dip"
+                    android:background="@drawable/bg_translucent_gray" >
+
+                    <TextView
+                        android:id="@+id/descriptionText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="10dip"
+                        android:paddingTop="10dip"
+                        android:text="@string/photo_description" />
+                </FrameLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" >
+
+                    <TextView
+                        android:id="@+id/descriptionContentText1"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:layout_alignParentTop="true"
+                        android:ems="10"
+                        android:paddingLeft="10dip" >
+
+                        <requestFocus android:layout_width="match_parent" />
+                    </TextView>
+                </RelativeLayout>
+
+                <FrameLayout
+                    android:id="@+id/commentTitleLayout"
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dip"
+                    android:background="@drawable/bg_translucent_gray" >
+
+                    <TextView
+                        android:id="@+id/commentText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="10dip"
+                        android:paddingTop="10dip"
+                        android:text="@string/photo_comments" />
+                </FrameLayout>
+
+                <LinearLayout
+                    android:id="@+id/commentContentLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+                </LinearLayout>
+
+                <RelativeLayout
+                    android:id="@+id/publishCommentLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="30dip"
+                    android:orientation="horizontal" >
+
+                    <EditText
+                        android:id="@+id/commentContentText"
+                        android:layout_width="280dp"
+                        android:layout_height="fill_parent"
+                        android:layout_centerVertical="true"
+                        android:layout_marginLeft="0dp"
+                        android:hint="请在此输入"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/uploadConmentButton"
+                        android:layout_width="50dp"
+                        android:layout_height="25dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginRight="30dp"
+                        android:background="@drawable/btn_wooden1"
+                        android:text="@string/punish"
+                        android:textColor="#ffffff"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </RelativeLayout>
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/changeButtonInShowDetail"
+            android:layout_width="50dp"
+            android:layout_height="25dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="2dp"
+            android:layout_marginRight="30dp"
+            android:background="@drawable/btn_wooden1"
+            android:padding="2dp"
+            android:text="@string/modify"
+            android:textColor="#ffffff"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/upLoadButtonInShowDetail"
+            android:layout_width="50dp"
+            android:layout_height="25dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="2dp"
+            android:layout_marginRight="100dp"
+            android:background="@drawable/btn_wooden1"
+            android:padding="2dp"
+            android:text="@string/upload2"
+            android:textColor="#ffffff"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/actvity_show_detail_upload_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" >
+    </ProgressBar>
+
+</RelativeLayout>

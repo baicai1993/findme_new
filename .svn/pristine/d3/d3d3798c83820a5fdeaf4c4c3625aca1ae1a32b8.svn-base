@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">findme</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_search">搜索</string>
+    <string name="action_refresh">刷新</string>
+    <string name="action_share">分享</string>
+    <string name="desc_list_item_icon">Item Icon</string>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="empty"></string>
+    <string name="menu_item_title_record_manager">记录管理</string>
+    <string name="menu_item_title_money_manager">财务管理</string>
+    <string name="menu_item_title_friend_list">权限管理</string>
+    <string name="menu_item_title_self_information">个人信息</string>
+    <string name="menu_item_title_setting">设置</string>
+    <string name="menu_item_title_about_us">关于我们</string>
+    <string name="money_info">财务信息</string>
+    <string name="userid">用户名</string>
+    <string name="change_netsetting">修改网络设置</string>
+    <string name="quit">退出</string>
+    <string name="rec">本地</string>
+    <string name="audio">上传</string>
+    <string name="upload">网络</string>
+    <string name="photo">拍照</string>
+    <string name="local">正在获取地理位置......</string>
+    <string name="title_activity_audio">AudioActivity</string>
+    <string name="share">监控</string>
+    <string name="title_activity_show_detail">ShowDetailActivity</string>
+    <string name="description">工作日报</string>
+    <string name="login_label_username">账号:</string>
+    <string name="login_username_hint">qq/Email/手机</string>
+    <string name="login_password_hint">密码不能超过14位</string>
+    <string name="login_label_password">密码</string>
+    <string name="login_label_signin">登 录</string>
+    <string name="login_register_link">没有账号？  点此注册</string>
+    <string name="regist_label_username">请输入账号</string>
+    <string name="regist_username_hint">不超过6–18位</string>
+    <string name="title_activity_dbtest">DBTest</string>
+    <string name="frag3_title">联系人</string>
+    <string name="friend_list">可见我的</string>
+    <string name="function_permission">我可见的</string>
+    <string name="pull_to_refresh_pull_label">下拉刷新......</string>
+    <string name="pull_to_refresh_release_label">松开后刷新......</string>
+    <string name="pull_to_refresh_refreshing_label">正在刷新......</string>
+    <string name="pull_to_refresh_footer_release_label">松开后加载</string>
+    <string name="pull_to_refresh_footer_pull_label">上拉加载更多</string>
+    <string name="pull_to_refresh_footer_refreshing_label">加载中......</string>
+
+    <!-- 记录管理listview中item中的默认显示 -->
+    <string name="listview1_item_title">照片标题</string>
+    <string name="listview1_item_location">地理位置</string>
+    <string name="listview1_item_takeTime">拍照时间</string>
+    <string name="listview1_item_uploadTime">上传时间</string>
+    <string name="listview1_item_photographer">拍摄人</string>
+    <string name="listview1_item_isUpload">是否上传</string>
+
+    <!-- activity_photorecord_edit.xml -->
+    <string name="work_title">工作标题：</string>
+    <string name="work_property">工作分类：</string>
+    <string name="photo_sites">拍照地点</string>
+    <string name="photo_description">日报描述</string>
+    <string name="photo_comments">审核批示</string>
+    <string name="sure_to_modify">确认修改</string>
+    <string name="cancel_to_return">取消返回</string>
+    <string name="HD_picture">照片</string>
+    <string name="job_category">工作类别</string>
+    <string name="input_job_category">请输入工作类别</string>
+    <string name="photo_title">照片标题</string>
+    <string name="input_photo_title">请输入照片标题</string>
+    <string name="time">时间：</string>
+    <string name="concrete_time">XXXX年X月XX日 XX：XX：XX</string>
+    <string name="place">地点：</string>
+    <string name="concrete_place">辽宁省 沈阳市 文化路三好街3巷11号 东北大学XX路</string>
+    <string name="photographer">作者：</string>
+    <string name="grapher">张三</string>
+    <string name="input_description">请输入描述</string>
+    <string name="upload2">上传</string>
+    <string name="punish">批示</string>
+    <string name="punishing">稍等...</string>
+    <string name="punish_fail">评论失败</string>
+    <!-- activity_aboutus.xml -->
+    <string name="description_rongji">公司主营业务为软件产品的开发与销售、计算机系统集成及技术支持与服务。公司致力于国民经济、国家安全和社会信息化领域，在中国电子政务、信息安全、质检"三电工程"和协同管理等四个细分市场形成了竞争优势和领先地位。</string>
+    <string name="website">官方网站 <u>http://www.yisoft.cc</u></string>
+    <string name="function_detail">个人登录、本地信息、现场拍照、GPS定位、自动获取地点、自动获取时间、填写工作内容、语音记录、防止作弊,日报上传等功能</string>
+    <string name="company_introduction">公司简介</string>
+    <string name="copyright">Copyright @易软科技有限公司</string>
+    <!-- activity_photorecord_detail.xml -->
+    <string name="job_classification">日报分组</string>
+    <string name="photo_info">日报信息</string>
+    <string name="titleContentText1">描述</string>
+    <string name="modify">修改</string>
+
+    <!-- activity_photorecord_change -->
+    <string name="activity_changerecord_title">修改记录</string>
+
+    <!-- actiity_moneyrecord_edit.xml -->
+    <string name="add_record">添加记录</string>
+    <string name="zero_yuan">￥0.00</string>
+    <string name="project">项目：</string>
+    <string name="add_project_name">请添加项目名</string>
+    <string name="set_project_time">请设置项目时间</string>
+    <string name="subject">科目：</string>
+    <string name="others">其他</string>
+    <string name="entry_person">录入人：</string>
+    <string name="futianyu">付天宇</string>
+    <string name="price">单价：</string>
+    <string name="item_price">物品单价</string>
+    <string name="quantity">数目：</string>
+    <string name="item_quantity">物品数目</string>
+    <string name="remark">备注信息</string>
+    <string name="add_remark">请在此添加备注信息</string>
+
+    <!-- listitem_money -->
+    <string name="category">类别</string>
+    <string name="project_name">项目组名称</string>
+    <string name="overhead_time">开销时间</string>
+    <string name="money">¥2000</string>
+
+    <!-- fragment_aboutus.xml -->
+    <string name="FindMe">FindMe</string>
+    <string name="version">当前版本：</string>
+    <string name="copyright_text">Copyright @307a_FindME_移动开发小组</string>
+    <string name="other_text">官网|服务条款|微博</string>
+    <string name="function_introduction">功能介绍：</string>
+    <string name="function_info">个人登录、本地信息、现场拍照、GPS定位、自动获取地点、自动获取时间、填写工作内容、语音记录、防止作弊,日报上传等功能</string>
+
+    <!-- fragment_selfinfo.xml -->
+    <string name="test1">test</string>
+    <string name="ID1">ID:</string>
+    <string name="name">姓名:</string>
+    <string name="number1000">1000</string>
+    <string name="emailbox">邮箱:</string>
+    <string name="email_address">123456789@qq.com</string>
+
+    <!-- fragment_setting.xml -->
+    <string name="network_setting">网络设置：</string>
+    <string name="server_address">  服务器地址：</string>
+    <string name="server_address_content">  182.92.152.53:8080/</string>
+    <string name="server_IP_address">  服务器IP地址：</string>
+    <string name="server_port_number">  服务器端口号：</string>
+    <string name="login_setting">登录设置：</string>
+    <string name="automatic_login">  自动登录</string>
+    <string name="ensure_modification">确定修改</string>
+    <string name="reset_defult">恢复默认</string>
+
+    <!-- activity_ipconfig.xml -->
+    <string name="set_IP_address">请输入您的服务器地址:</string>
+    <string name="IP_address">182.92.152.53:8080/</string>
+    <string name="remember_setting">记住设置</string>
+    <string name="not_show_this_page">不显示此页面</string>
+    <string name="resetting">重置</string>
+    <string name="remember_address">记住地址                 </string>
+
+    <!-- activity_photodetail_dialog.xml -->
+    <string name="photo_time">拍照时间：</string>
+    <string name="photo_name">照片名字：</string>
+    <string name="photo_ID">照片ID：</string>
+    <string name="upload_time">上传时间：</string>
+    <string name="site_longitude">地点经度：</string>
+    <string name="site_latitude">地点纬度：</string>
+    <string name="photo_height">照片高度：</string>
+    <string name="SDCard">SDCard：</string>
+    <string name="refresh">刷新</string>
+    <string name="login_automatically">自动登录</string>
+    <string name="function_selection">功能选择</string>
+    <string name="logout">注销登录</string>
+    <string name="recorder">记录人：</string>
+    <string name="title_activity_show_big_photo">ShowBigPhoto</string>
+    <string name="title_activity_sign_in">SignInActivity</string>
+    <string name="title_activity_self_information">SelfInformationActivity</string>
+    <string name="title_activity_setting">SettingActivity</string>
+    <string name="title_activity_about_us">AboutUsActivity</string>
+    
+    <!-- activity_someone_info.xml -->
+    <string name="activity_someone_info_headimage">头像:</string>
+    <string name="activity_someone_info_name">姓名:</string>
+    <string name="activity_someone_info_sex">性别:</string>
+    <string name="activity_someone_info_birthday">生日:</string>
+    <string name="activity_someone_info_email">邮箱:</string>
+    <string name="activity_someone_info_phone">电话:</string>
+    
+
+    <!-- activity_notice_center.xml -->
+    <string name="notice_title">消息中心</string>
+    <!-- 字符串 -->
+    <string name="notice_action1">notice_action1</string>
+    <string name="title_activity_notice">NoticeActivity</string>
+    <!-- 通知 -->
+    <string name="net_error">网络连接错误，请修改网络设置</string>
+    <string name="net_block">与服务器通信失败，请检查网络是否通畅</string>
+    <string name="refresh_newest">已更到最新</string>
+    <string name="refresh_noMoreOld">没有更多了</string>
+    <string name="refresh_over">更新完毕</string>
+    <string name="refresh_fail">更新失败</string>
+    <string name="timesearch_fail">搜索失败</string>
+    <string name="netRefresh_over">网络更新完毕</string>
+    <string name="otherRefresh_over">监控更新完毕</string>
+    <string name="refresh_pressButton">数据同步异常，请点击刷新按钮重新获取</string>
+    <string name="progressDialog_load">加载</string>
+    <string name="progressDialog_loading">正在加载中，请稍候......</string>
+    <string name="progressDialog_wait">请稍候</string>
+    <string name="progressDialog_waiting">正在处理中......</string>
+    <string name="progressDialog_sync">同步</string>
+    <string name="progressDialog_syncing">正在同步中，请稍候......</string>
+    <string name="spinnerItem_all">全部</string>
+    <string name="spinnerItem_null">无</string>
+    <string name="spinnerItem_chooseProject">请选择项目</string>
+    <string name="location_locating">正在获取地理位置......</string>
+    <string name="location_timeout">获取地理位置超时,点击重试</string>
+    <string name="location_exception">地理位置异常</string>
+    <string name="timePickerDialog_title">选取搜索时间</string>
+    <string name="timeSearch_noData">没有数据</string>
+    <string name="timePickerDialog_content">确  定</string>
+    <string name="takePhoto_notFoundStorage">未找到存储位置</string>
+    <string name="takePhoto_success">拍照成功</string>
+    <string name="takePhoto_failToGetResourse">获取资源失败</string>
+    <string name="settingDialog_title">提示</string>
+    <string name="netSettingDialog_content">请确定填写的信息无误,确定后将会清除原始数据并返回到登录页面</string>
+    <string name="versionSettingDialog_content">有新版本，是否更新</string>
+    <string name="versionSettingProgress_title">检查</string>
+    <string name="versionSettingProgress_content">检查更新......</string>
+    <string name="commonVocabulary_makeSure">确定</string>
+    <string name="commonVocabulary_cancel">取消</string>
+    <string name="commonVocabulary_retry">重试</string>
+    <string name="commonVocabulary_back">返回</string>
+    <string name="commonVocabulary_year">年</string>
+    <string name="commonVocabulary_month">月</string>
+    <string name="commonVocabulary_day">日</string>
+    <string name="commonVocabulary_rmb">￥ </string>
+    <string name="commonVocabulary_leftBracket">【</string>
+    <string name="commonVocabulary_rightBracket">】</string>
+    <string name="jurisdictionDialog_title">提示</string>
+    <string name="autorityChange_fail">权限修改失败</string>
+    <string name="autorityChange_success">权限修改成功</string>
+    <string name="upload_uploaded">已上传</string>
+    <string name="upload_notUpload">未上传</string>
+    <string name="netType_2g3g">当前为3G/2G网络</string>
+    <string name="netType_wifi">当前为Wifi网络</string>
+    <string name="quitDialog_content">确定退出吗</string>
+    <string name="synchronizationDialog_content">确定与服务器同步数据吗</string>
+    <string name="quitDialog_title">提示</string>
+    <string name="logoffDialog_content">确定注销登录吗</string>
+    <string name="logoffDialog_title">提示</string>
+    <string name="changeProgressDialog_content">修改中，请稍候......</string>
+    <string name="changeProgressDialog_title">修改</string>
+    <string name="change_success">修改成功</string>
+    <string name="change_failed">修改失败</string>
+    <string name="uploadProgressDialog_title">上传</string>
+    <string name="uploadProgressDialog_content">图片上传中，请稍候......</string>
+    <string name="upload_success">上传成功</string>
+    <string name="upload_photoFail">上传失败，已存入本地</string>
+    <string name="upload_fail">上传失败</string>
+    <string name="upload_photoNotExsist">照片不存在</string>
+    <string name="moneyProgressDialog_content">财务上传中，请稍候......</string>
+    <string name="moneyProgressDialog_title">上传</string>
+    <string name="money_formUnfinished">请完整填写表单</string>
+    <string name="setting_version_updateSucceed">更新成功</string>
+    <string name="setting_version_updateFailure">更新失败</string>
+    <string name="login_success">登录成功</string>
+    <string name="login_fail">账号或密码输入错误，请检查后重试</string>
+    <string name="login_iniFail">重要信息初始化失败，请检查网络并重新登录</string>
+    <string name="login_welcome">欢迎您登录</string>
+    <string name="loginProgressDialog_title">登录</string>
+    <string name="loginProgressDialog_content">登录中，请稍候......</string>
+    <string name="login_donotAnxious">正在努力加载，请不要心急</string>
+    <string name="showPhtoDetailDialog_title">照片信息：</string>
+    <string name="comment_fail">评论失败</string>
+    <string name="comment_forbidNull">请不要发送空消息</string>
+    <string name="sighin_success">签到/签退成功</string>
+    <string name="sighin_fail">签到/签退失败</string>
+    <string name="sighin_repeat">您今天已经签到/签退了</string>
+    <string name="sigh_noLocation">未获取到有效地理位置</string>
+    <string name="sighin_already">已签到</string>
+    <string name="sighout_already">已签退</string>
+    <string name="sighinProgressDialog_content">签到中，请稍候......</string>
+    <string name="sighinProgressDialog_title">签到</string>
+    <string name="sighoutProgressDialog_content">签退中，请稍候......</string>
+    <string name="sighoutProgressDialog_title">签退</string>
+    <string name="signWithoutLocationDialog_title">您的设备定位超时</string>
+    <string name="signWithoutLocationDialog_title_content">仍然签到/签退吗</string>
+    <string name="mainAct_donotAnxious">正在努力加载数据，请稍候</string>
+    <string name="sigh_getTimePD_title">获取服务器时间</string>
+    <string name="sigh_getTime_fail">获取服务器时间失败</string>
+    <string name="sigh_getTimePD_content">请稍候......</string>
+    <string name="money_remainder">余额：</string>
+    <string name="money_budget">预算：</string>
+    <string name="money_zero">0</string>
+    <string name="recordEditDialog_tittle">此记录未上传</string>
+    <string name="recordEditDialog_content">是否存储到本地记录</string>
+    <string name="syncNetData_fail">网络数据同步失败</string>
+    <string name="syncOtherData_fail">监控数据同步失败</string>
+    <string name="syncData_success">数据同步成功</string>
+    <string name="syncData_fail">数据同步失败</string>
+    <string name="syncCanseemeData_fail">可见我的用户数据同步失败</string>
+    <string name="syncIcanseeData_fail">我可见的用户数据同步失败</string>
+    <string name="syncHeadImageList_fail">用户头像同步失败</string>
+    <string name="syncUserData_success">用户权限数据同步成功</string>
+    <string name="takePhoto_fail">未知原因生成记录失败,请重试</string>
+    <string name="emptyNotReadDialog_content">确定要清空全部未读记录吗</string>
+    <string name="emptyNotRead_fail">清空失败</string>
+    <string name="getUpdateTime_fail">获取同步时间失败</string>
+    <string name="initProject_fail">初始化项目信息失败</string>
+    <string name="initServerData_fault">服务器未提供有效的初始化信息</string>
+
+    <!-- DevicesUtil.java -->
+    <string name="devicesUtil_downFail">下载失败</string>
+    <string name="devicesUtil_downSuccess">下载成功</string>
+    <string name="devicesUtil_getVersionFail">获取版本失败</string>
+    <string name="devicesUtil_isNew">已是最新版本</string>
+    <string name="devicesUtil_ifDownNew">是否下载最新版本</string>
+    <string name="devicesUtil_nowVersion">当前版本为:</string>
+    <string name="devicesUtil_nowUpdate">立即更新</string>
+    <string name="devicesUtil_afterUpdate">稍后更新</string>
+    <string name="devicesUtil_pleaseWait">请稍后</string>
+    <string name="devicesUtil_willVersion">更新版本为:</string>
+    <string name="devicesUtil_uploading">正在下载</string>
+    <string name="title_activity_someone_info">SomeoneInfoActivity</string>
+
+</resources>

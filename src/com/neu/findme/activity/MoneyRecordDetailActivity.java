@@ -1,0 +1,76 @@
+package com.neu.findme.activity;
+
+import java.text.DecimalFormat;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.Window;
+import android.widget.TextView;
+import com.lidroid.xutils.ViewUtils;
+import com.lidroid.xutils.view.annotation.ViewInject;
+import com.lidroid.xutils.view.annotation.event.OnClick;
+import com.neu.findme.R;
+import com.neu.findme.domain.MoneyRecordBean;
+/**
+ * @author cxm
+ * 接受财务数据反序列化并显示，小数点截取前两位
+ * 2015-03-09 19:38:40
+ */
+public class MoneyRecordDetailActivity extends Activity {
+	@ViewInject(R.id.detail_numberOfMoneyText)
+	private TextView detail_numberOfMoneyText;
+	@ViewInject(R.id.projectNameTextTitleContent)
+	private TextView projectNameTextTitleContent;
+	@ViewInject(R.id.projectItemTextTitleContent)
+	private TextView projectItemTextTitleContent;
+	@ViewInject(R.id.projectTimeContent)
+	private TextView projectTimeContent;
+	@ViewInject(R.id.detail_handlerText)
+	private TextView detail_handlerText;
+	@ViewInject(R.id.detail_recorder)
+	private TextView detail_recorder;
+	@ViewInject(R.id.goodsValueTextContent)
+	private TextView goodsValueTextContent;
+	@ViewInject(R.id.goodsNumberTextContent)
+	private TextView goodsNumberTextContent;
+	@ViewInject(R.id.remarkContent)
+	private TextView remarkContent;
+	@OnClick(R.id.showMoneyBackButton)
+	public void backButtonListener(View view){
+		MoneyRecordDetailActivity.this.finish();
+	}
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);// 设置没有应用名称标题栏
+		setContentView(R.layout.activity_moneyrecord_detail);
+		ViewUtils.inject(this);//注册
+		Intent intent = getIntent();
+		// 根据这个id获取对应的Bean
+//		int recordBeanId = intent.getExtras().getInt("recordBeanId");
+		MoneyRecordBean bean = (MoneyRecordBean) intent.getExtras().get("bean");
+		detail_numberOfMoneyText.setText(new DecimalFormat(".00").format(bean.getTotal_price()));
+		projectNameTextTitleContent.setText(bean.getProject_name());
+		projectItemTextTitleContent.setText(bean.getType_name());
+		projectTimeContent.setText(bean.getTimeStr());
+		detail_handlerText.setText(bean.getHandler());
+		detail_recorder.setText(bean.getRecorder());
+		goodsValueTextContent.setText(new DecimalFormat(".00").format(bean.getUnit_price()));
+		goodsNumberTextContent.setText(String.valueOf(bean.getNumber()));
+		remarkContent.setText(bean.getDesc());
+		}
+	// 点击返回键时的操作
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+			MoneyRecordDetailActivity.this.finish();
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+}

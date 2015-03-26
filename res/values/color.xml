@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="white">#DDDDDD</color>
+    <color name="white1">#FFFFFF</color>
+    <color name="white2">#f5f5f5</color>
+    <color name="main_bg">#fff0f0f0</color>
+    <color name="grey">#ff58616d</color>
+    <color name="lightgrey">#ff888888</color>
+    <color name="blue1">#ff61a8de</color>
+    <color name="black">#000000</color>
+    <color name="black1">#2b1f20</color>
+    <color name="transparent">#9000</color>
+    <color name="orange">#ef780e</color>
+    <color name="green">#0a9b0a</color>
+    <color name="pin">#f5717e</color>
+    <color name="sign">#FFEBCD</color>
+    <color name="darkgray">#A9A9A9</color>
+    <color name="turquoise">#DBB67B</color>
+    <color name="moneyspinner">#6C3B21</color>
+    <color name="brown">#65371f</color>
+
+</resources>

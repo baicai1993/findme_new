@@ -1,0 +1,547 @@
+package com.neu.findme.activity;
+
+
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.res.Configuration;
+import android.content.res.TypedArray;
+import android.net.Uri;
+import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.widget.DrawerLayout;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.ListView;
+
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.neu.findme.R;
+import com.neu.findme.adapter.CanSeeMeListAdapter;
+import com.neu.findme.adapter.NavDrawerListAdapter;
+import com.neu.findme.domain.NavDrawerItem;
+import com.neu.findme.domain.ProjectCosttypeBean;
+import com.neu.findme.domain.UnfinishProject;
+import com.neu.findme.domain.UserBean;
+import com.neu.findme.fragment.TabHostFragment;
+import com.neu.findme.server_db.NoticeRecDBserver;
+import com.neu.findme.server_db.ProjectCosttypeDBServer;
+import com.neu.findme.server_db.UnfinishProjectDBServer;
+import com.neu.findme.server_db.UserDBServer;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.service.GetNoticeService;
+import com.neu.findme.utils.DevicesUtil;
+import com.neu.findme.utils.FileUtil;
+import com.neu.findme.utils.JsonParseUtils;
+import com.neu.findme.utils.MyApplication;
+import com.neu.findme.utils.MyCookie;
+import com.neu.findme.utils.PhotoCompressionUtil;
+import com.neu.findme.view.MyAlertDialog;
+
+
+/**
+ * @author cxm
+ *这是程序的主Activity，界面逻辑上它包含左侧拉抽屉组件和TabHostFragment
+ *功能上包括检查服务器数据更新，启动后台service，初始化配置文件cookie的一些数据到内存
+ *监听并处理GetNoticeService控制通知中心的未读消息数变化
+ *处理由自身或tabhostActivity跳转到其他界面的回调结果，主要需要处理拍照的结果
+ *2015-03-09 17:13:09
+ */
+public class MainActivity extends FragmentActivity implements OnItemClickListener {
+	//测拉抽屉组件相关
+	private final int REQUEST_CAPTRUE_IMAGE = 1;
+//	private CharSequence mTitle;
+//	private CharSequence mDrawerTitle;
+	private String[] mNavMenuTitles;
+	private static DrawerLayout mDrawerLayout;
+	private static ListView mDrawerList;
+	public static List<NavDrawerItem> mNavDrawerItems;
+	private TypedArray mNavMenuIconsTypeArray;
+	public static NavDrawerListAdapter mAdapter;
+	private ActionBarDrawerToggle mDrawerToggle;
+	public static final int FROM_SETTING = 1;
+	//更新工作组相关
+	private HttpWebServer webServer;
+	private DevicesUtil devicesUtil;
+	private UnfinishProjectDBServer unfinishProjectDBServer;
+	private ProjectCosttypeDBServer projectCosttypeDBServer;
+	private List<ProjectCosttypeBean> projectCosttypeBeans;
+	private List<String> unfinishProjects;
+	private String localUpdateTime;
+	private String updateTime;
+	//显示未读回复记录相关
+	private NoticeRecDBserver noticeRecDBserver;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		setContentView(R.layout.activity_main);
+		getSupportFragmentManager().beginTransaction().replace(R.id.main_fragment, new TabHostFragment()).commit();
+		findView();
+//		//设置抽屉初始选择的位置
+//		if (savedInstanceState == null) {
+//        selectItem(0);
+//    }
+		//在进入主界面之后读取用户名和网络配置到内存，
+		//当然如果用户没有选择自动登录或者记住网络配置而以访客身份从这台设备登录，则配置文件为空，
+		//所以读取之前要先判断是否这些数据已经为访客写入了内存
+		if(MyApplication.get("userId")==null)
+		MyApplication.put("userId", MyCookie.getString("userId", ""));
+		if(MyApplication.get("ipconfig")==null)
+		MyApplication.put("ipconfig",MyCookie.getString("ipconfig", "") );
+		if(MyApplication.get("ip")==null)
+		MyApplication.put("ip", MyCookie.getString("ip", "") );
+		if(MyApplication.get("port")==null)
+		MyApplication.put("port", MyCookie.getString("port", ""));
+		if(MyApplication.get("company")==null)
+		MyApplication.put("company", MyCookie.getString("company", ""));
+		webServer = new HttpWebServer();
+		projectCosttypeDBServer = new ProjectCosttypeDBServer(this);
+		unfinishProjectDBServer = new UnfinishProjectDBServer(this);
+		noticeRecDBserver = new NoticeRecDBserver(this);
+		webServer.getProjectTypeUpdateTime(updateProjectInfoRC);
+		// 获取当前用户头像
+		webServer.getAllHeadImageList(getHeadimageRC);
+		// //启动后台Service
+		Intent serviceIntent = new Intent(MainActivity.this,GetNoticeService.class);
+		startService(serviceIntent);
+		// //注册广播
+		registerReceiver(noticeBroadcastReceiver, new IntentFilter("notice_action1"));
+		//  检查更新，有更新会提示
+		devicesUtil = new DevicesUtil();
+		devicesUtil.getNewApk(this);
+	}
+	@Override
+	public void onDestroy() {
+		// TODO Auto-generated method stub
+		// 取消接受广播
+		unregisterReceiver(noticeBroadcastReceiver);
+		mAdapter = null;
+		mNavDrawerItems = null;
+		super.onDestroy();
+	}
+	
+	@Override
+	protected void onResume() {
+		// TODO Auto-generated method stub
+		//每次恢复主页面，更新一下消息中心显示的通知数
+		mNavDrawerItems.get(1).setCount(noticeRecDBserver.queryAllNotRead().size()+"");
+		super.onResume();
+	}
+	//处理tabhostActivity跳转到其他activity的回调方法
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		if (resultCode == Activity.RESULT_OK) {
+			//处理tab1拍照之后的回调方法
+			if (requestCode == REQUEST_CAPTRUE_IMAGE) {
+					String photoName = MyCookie.getString("photoName", "");
+					String locationStr = MyCookie.getString("locationStr", "");
+					String userId = MyCookie.getString("userId", "");
+					if(photoName.equals("")||locationStr.equals("")||userId.equals("")){
+						Toast.makeText(MainActivity.this,MyApplication.getApplication().
+								getString(R.string.takePhoto_fail), Toast.LENGTH_SHORT).show();
+					}else {
+						String path = FileUtil.RECORD_PATH+ userId + File.separator + photoName;
+						File file = new File(path);
+						// 获取图片Uri，封装一条记录
+						Uri uri = Uri.fromFile(file);
+						// 压缩图片
+						PhotoCompressionUtil.compressImage(file);
+						// 跳转到editAndUploadActivity,传递图片uri，定位字符串locationStr
+						Intent intent = new Intent(this,
+								PhotoRecordEditActivity.class);
+						String temp = uri.toString();
+						intent.putExtra("uri", temp);
+						intent.putExtra("locationStr", locationStr);
+						intent.putExtra("photoName", photoName);
+						intent.putExtra("sdUri", uri.toString());
+						startActivity(intent);
+					}
+				}
+			}
+		//处理跳转到设置界面的返回信息
+		if(resultCode == FROM_SETTING){
+			MainActivity.this.finish();
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+	// 点击返回键时的操作
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		// TODO Auto-generated method stub
+		if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+			final MyAlertDialog myAlertDialog = new MyAlertDialog(this);
+			myAlertDialog.showWoodDialog(true);
+			myAlertDialog.getDialog_title().setText(MyApplication.getApplication().getString(R.string.quitDialog_title));
+			myAlertDialog.getDialog_msg().setText(MyApplication.getApplication().getString(R.string.quitDialog_content));
+			myAlertDialog.getPosButton().setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					MainActivity.this.finish();
+				}
+			});
+			myAlertDialog.getNevButton().setOnClickListener(new OnClickListener() {
+				
+				@Override
+				public void onClick(View v) {
+					// TODO Auto-generated method stub
+					myAlertDialog.dismiss();
+				}
+			});
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+	@SuppressLint("NewApi")
+	private void findView() {
+		
+//		mTitle = mDrawerTitle = getTitle();
+        
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // 划开抽屉的阴影
+//        mDrawerLayout.setDrawerShadow(R.drawable.ic_drawer_shadow, GravityCompat.START);
+        
+        mNavMenuTitles = getResources().getStringArray(R.array.nav_drawer_items);
+        // 获取抽屉条目的图片数组
+     	mNavMenuIconsTypeArray = getResources()
+     				.obtainTypedArray(R.array.nav_drawer_icons);
+     		
+        mNavDrawerItems = new ArrayList<NavDrawerItem>();
+
+		// 实例化每个item对象，并添加到数组
+		// 签到打卡
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[0], mNavMenuIconsTypeArray
+				.getResourceId(0, -1)));
+		// 通知中心,从配置文件中读取消息中心中未读消息的数量
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[1], mNavMenuIconsTypeArray
+				.getResourceId(1, -1),true,MyCookie.getString("noticeNum", "0")));
+		// 个人资料
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[2], mNavMenuIconsTypeArray
+				.getResourceId(2, -1)));
+		// 关于我们
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[3], mNavMenuIconsTypeArray
+				.getResourceId(3, -1)));
+		// 设置
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[4], mNavMenuIconsTypeArray
+				.getResourceId(4, -1)));
+		// 注销
+		mNavDrawerItems.add(new NavDrawerItem(mNavMenuTitles[5], mNavMenuIconsTypeArray
+				.getResourceId(5, -1)));
+
+		// 回收数组
+		mNavMenuIconsTypeArray.recycle();
+        
+		// 设置item的适配器
+		mAdapter = new NavDrawerListAdapter(getApplicationContext(),
+						mNavDrawerItems);
+		mDrawerList.setAdapter(mAdapter);
+		mDrawerList.setOnItemClickListener(this);
+		
+		
+//		// enable ActionBar app icon to behave as action to toggle nav drawer
+//        getActionBar().setDisplayHomeAsUpEnabled(true);
+//        getActionBar().setHomeButtonEnabled(true);
+		
+		// ActionBarDrawerToggle ties together the the proper interactions
+        // between the sliding drawer and the action bar app icon
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+                ) {
+            public void onDrawerClosed(View view) {
+//                getActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+//                getActionBar().setTitle(mDrawerTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+	}
+
+	/* Called whenever we call invalidateOptionsMenu() */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content view
+//        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        return super.onPrepareOptionsMenu(menu);
+    }
+	
+	@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+         // The action bar home/up action should open or close the drawer.
+         // ActionBarDrawerToggle will take care of this.
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        // Handle action buttons
+        switch(item.getItemId()) {
+
+
+        default:
+            return super.onOptionsItemSelected(item);
+        }
+    }
+	
+	@Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Pass any configuration change to the drawer toggls
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+    
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position,
+			long id) {
+		
+		selectItem(position);
+	}
+	
+	/**
+	 * Diplaying fragment view for selected nav drawer list item
+	 * */
+	private void selectItem(int position) {
+		// update the main content by replacing fragments
+		Intent intent = new Intent();
+		switch (position) {
+		case 0:
+			//个人信息
+			intent.setClass(this, PersonalInfoActivity.class);
+			startActivity(intent);
+			break;
+		case 1:
+			//通知中心
+			GetNoticeService.cancelNotify();
+			intent.setClass(this, NoticeCenterActivity.class);
+			startActivity(intent);
+			break;
+		case 2:
+			//签到
+			intent.setClass(this, SignInActivity.class);
+			startActivity(intent);
+			break;
+		case 3:
+			//关于我们
+			intent.setClass(this, AboutUsActivity.class);
+			startActivity(intent);
+			break;
+		case 4:
+			//设置
+			intent.setClass(this, SettingActivity.class);
+			startActivityForResult(intent, 1);
+			break;
+		case 5:
+			//注销
+			logOff();
+			break;
+		default:
+			break;
+		}
+			// 更新被选中的抽屉然后未关闭抽屉
+			mDrawerList.setItemChecked(position, true);
+			mDrawerList.setSelection(position);
+			setTitle(mNavMenuTitles[position]);
+//			mDrawerLayout.closeDrawer(mDrawerList);
+	}
+	//注销
+	private void logOff(){
+		final MyAlertDialog myAlertDialog = new MyAlertDialog(this);
+		myAlertDialog.showWoodDialog(true);
+		myAlertDialog.getDialog_title().setText(MyApplication.getApplication().getString(R.string.logoffDialog_title));
+		myAlertDialog.getDialog_msg().setText(MyApplication.getApplication().getString(R.string.logoffDialog_content));
+		myAlertDialog.getPosButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				myAlertDialog.dismiss();
+				//清理当前用户的配置文件和数据库
+				new UserDBServer(MainActivity.this).clearAllTable();
+				String ip = MyCookie.getString("ipconfig", "");
+				MyCookie.removeCookie();
+				if(!ip.equals("")){
+					MyCookie.putString("ipconfig", ip);
+				}
+				
+				//清理任务栈，并开启新任务栈
+				Intent logoutIntent = new Intent(MainActivity.this, IPconfigActivity.class);
+                logoutIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(logoutIntent);
+			}
+		});
+		myAlertDialog.getNevButton().setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				myAlertDialog.dismiss();
+			}
+		});
+	}
+
+	//为外部提供打开抽屉的方法
+	public static void OpenDrawer(){
+		mDrawerLayout.openDrawer(mDrawerList);
+	}
+	@SuppressLint("NewApi")
+	@Override
+	public void setTitle(CharSequence title) {
+//		mTitle = title;
+//		getActionBar().setTitle(mTitle);
+	}
+	//更新工作组信息的接口
+	private RequestCallBack<String> updateProjectInfoRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			updateTime = JsonParseUtils.jsonToString(arg0.result, "updatetime");
+			if(!updateTime.equals("")){
+				localUpdateTime = MyCookie.getString("updateTime", "");
+				if(localUpdateTime.equals("")||!(localUpdateTime.equals(updateTime))){
+					//需要更新本地的工作组信息
+					webServer.getProjectCostTypes(getProjectTypeRC);
+				}
+			}
+		}
+	};
+	//处理更新工作组-类别信息的web请求结果
+	private RequestCallBack<String> getProjectTypeRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			projectCosttypeBeans = (List<ProjectCosttypeBean>) JsonParseUtils.jsonToEntitylist(arg0.result, ProjectCosttypeBean.class);
+			if(projectCosttypeBeans.size()>0){
+				webServer.getUnfinishProject(getUnfinishProjectRC);
+			}
+		}
+	};
+	//处理获取未完成项目信息的web请求结果
+	private RequestCallBack<String> getUnfinishProjectRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			// TODO Auto-generated method stub
+			unfinishProjects = (List<String>) JsonParseUtils.jsonToList(arg0.result, String.class);
+			List<UnfinishProject> unProjects = new ArrayList<UnfinishProject>();
+			if(unfinishProjects.size()>0){
+				for(String s:unfinishProjects){
+					unProjects.add(new UnfinishProject(s));
+				}
+				//数据初始化成功，数据持久化
+				MyCookie.putString("updateTime",updateTime);
+				projectCosttypeDBServer.resetTable(projectCosttypeBeans, ProjectCosttypeBean.class);
+				unfinishProjectDBServer.resetTable(unProjects, UnfinishProject.class);
+			}
+			
+		}
+	};
+	//广播监听接收并处理来自GetNoticeService的广播
+	private BroadcastReceiver noticeBroadcastReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			// TODO Auto-generated method stub
+			if (intent.getAction().equals("notice_action1")) {
+//				String noticeNum = intent.getExtras().getInt("noticeNum")+"";
+//				MyCookie.putString("noticeNum", noticeNum);
+//				// 在这里修改通知中心显示的数字
+//				mNavDrawerItems.get(1).setCount(noticeNum);
+				mNavDrawerItems.get(1).setCount(noticeRecDBserver.queryAllNotRead().size()+"");
+				mAdapter.notifyDataSetChanged();
+			}
+		}
+	};
+	// 获取用户自己的头像
+		private RequestCallBack<String> getHeadimageRC = new RequestCallBack<String>() {
+			@Override
+			public void onFailure(HttpException arg0, String arg1) {
+			}
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public void onSuccess(ResponseInfo<String> arg0) {
+				List<UserBean> list = (List<UserBean>) JsonParseUtils.jsonToList(
+						arg0.result, UserBean.class);
+				if (list.size() > 0) {
+					// 如果两个列表中有匹配数据，更新添加头像的数据，更新列表显示的数据
+					for (UserBean bean : list) {
+						if (bean.getId().equals(MyCookie.getString("userId", null))) {
+							MyCookie.putString("headimage", bean.getHeadimage());
+						}
+					}
+					// 如果MyCookie有headimage，下载自己的头像
+					if (MyCookie.getString("headimage", null) != null) {
+						UserBean myBean = new UserBean();
+						myBean.setHeadimage(MyCookie.getString("headimage", null));
+						String headimageSdUri = FileUtil.HEADIMAGE_PATH + myBean.getHeadimage();
+						if (!(new File(headimageSdUri).exists())) {
+							webServer.downloadHeadimage(downloadHeadimageRC,
+									myBean.getHeadimage(), headimageSdUri);
+						}
+					}
+				} 
+			}
+		};
+		// 下载用户头像
+		private RequestCallBack<File> downloadHeadimageRC = new RequestCallBack<File>() {
+			@Override
+			public void onFailure(HttpException arg0, String arg1) {
+			}
+
+			@Override
+			public void onSuccess(ResponseInfo<File> arg0) {
+			}
+		};
+}

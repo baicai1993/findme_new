@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_wooden3"
+    android:orientation="vertical" >
+<RelativeLayout
+            android:id="@+id/controlLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="50dip"
+            android:background="@drawable/bg_wooden_bottom"
+            android:orientation="horizontal" >
+
+            <Button
+                android:id="@+id/showDrawerButton"
+                android:layout_width="30dip"
+                android:layout_height="30dip"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_centerVertical="true"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="10dp"
+                android:background="@anim/btn_show" />
+
+            <TextView
+                android:id="@+id/main_title"
+                android:layout_width="wrap_content"
+                android:layout_height="45dip"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_marginTop="5dp"
+                android:textColor="@color/black1"
+                android:paddingTop="7dp"
+                android:text="@string/menu_item_title_friend_list"
+                android:textSize="20sp" />
+
+            <Button
+                android:id="@+id/refreshButton"
+                android:layout_width="35dp"
+                android:layout_height="35dip"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="8dp"
+                android:background="@anim/btn_refresh2" />
+        </RelativeLayout>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="42dip"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/btn_wooden_long_n" >
+
+        <ImageView
+            android:id="@+id/cursor"
+            android:layout_width="80dip"
+            android:layout_height="2dip"
+            android:layout_marginLeft="0dip"
+            android:layout_marginTop="31dip"
+            android:contentDescription="@string/empty"
+            android:scaleType="center"
+            android:src="@drawable/ic_cursor" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="40dip" >
+
+            <TextView
+                android:id="@+id/title1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dip"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:text="@string/friend_list"
+                android:textColor="@color/black1"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/title2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dip"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:text="@string/function_permission"
+                android:textColor="@color/black1"
+                android:textSize="20sp" />
+            
+        </LinearLayout>
+    </FrameLayout>
+    <!-- 中间的导航条结束 -->
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+		<!-- 
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_margin="5dp"
+            android:background="@drawable/fragment_shape_background"
+            android:padding="2dp" >
+          -->
+
+            <android.support.v4.view.ViewPager
+                android:id="@+id/viewPager"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_gravity="center"
+                android:flipInterval="30"
+                android:persistentDrawingCache="animation" />
+        <!-- 
+        </LinearLayout>
+         -->
+    </LinearLayout>
+
+</LinearLayout>

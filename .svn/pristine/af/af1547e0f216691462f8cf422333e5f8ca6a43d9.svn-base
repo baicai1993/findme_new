@@ -1,0 +1,54 @@
+package com.neu.findme.server_db;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import android.content.Context;
+import com.lidroid.xutils.DbUtils;
+import com.lidroid.xutils.db.sqlite.Selector;
+import com.lidroid.xutils.db.sqlite.WhereBuilder;
+import com.lidroid.xutils.exception.DbException;
+import com.neu.findme.domain.CommentBean;
+
+/**
+ * @author fty
+ *评论相关数据库服务类
+ *2015-03-09 21:22:29
+ */
+public class CommentDBServer extends BaseDBServer {
+	public CommentDBServer(Context context){
+		dbUtils = DbUtils.create(context);
+	}
+
+@SuppressWarnings("unchecked")
+@Override
+	public List<CommentBean> queryAllOrderBy(Class<?> type, String columnName,boolean desc) {
+		// TODO Auto-generated method stub
+		return (List<CommentBean>) super.queryAllOrderBy(type, columnName,desc);
+	}
+//查看某张照片的评论记录,按时间排列
+public List<CommentBean> queryByPhotoId(String photoId){
+	try {
+		List<CommentBean> list = dbUtils.findAll(Selector.from(CommentBean.class).where("photoId", "=", photoId).orderBy("upload_time"));
+		if(list==null){
+			return new ArrayList<CommentBean>();
+		}
+		return list;
+	} catch (DbException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		return new ArrayList<CommentBean>();
+	}
+}
+	//删除某张照片的评论记录
+public boolean deleteComments(String photoId){
+	try {
+		dbUtils.delete(CommentBean.class,WhereBuilder.b("photoId", "=", photoId));
+		return true;
+	} catch (DbException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		return false;
+	}
+}
+}

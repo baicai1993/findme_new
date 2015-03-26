@@ -1,0 +1,221 @@
+package com.neu.findme.utils;
+
+import java.io.File;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.telephony.TelephonyManager;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Toast;
+
+import com.lidroid.xutils.exception.HttpException;
+import com.lidroid.xutils.http.ResponseInfo;
+import com.lidroid.xutils.http.callback.RequestCallBack;
+import com.neu.findme.R;
+import com.neu.findme.activity.MainActivity;
+import com.neu.findme.server_web.HttpWebServer;
+import com.neu.findme.view.MyAlertDialog;
+
+/**
+ * @author cxm 获取apk的版本号，imei号 提供新版apk的下载更新 2015-03-20 21:34:55
+ */
+public class DevicesUtil {
+
+	/*
+	 * 唯一的设备ID： 
+	 * GSM手机的 IMEI 和 CDMA手机的 MEID. 
+	 * Return null if device ID is not available.
+	 */
+	public static String getDeviceId(Context context) {
+		TelephonyManager tm = (TelephonyManager) context
+				.getSystemService(Context.TELEPHONY_SERVICE);
+		String id = tm.getDeviceId();
+		return id;
+	}
+
+	/**
+	 * 获取版本号
+	 * 
+	 * @return 当前应用的版本号
+	 */
+	public static String getVersion(Context context) {
+		try {
+			PackageManager manager = context.getPackageManager();
+			PackageInfo info = manager.getPackageInfo(context.getPackageName(),
+					0);
+			String version = info.versionName;
+			return version;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+		}
+	}
+
+	/**
+	 * 检查新版本
+	 * 
+	 * @param context
+	 */
+	public void getNewApk(Context context) {
+		this.context = context;
+		this.progressDialog = new ProgressDialog(context);
+		this.myAlertDialog = new MyAlertDialog(context);
+		webServer.getVersion(VersionRC);
+	}
+
+	private HttpWebServer webServer = new HttpWebServer();
+	private Context context;
+	private ProgressDialog progressDialog;
+	private MyAlertDialog myAlertDialog;
+	private RequestCallBack<File> ApkRC = new RequestCallBack<File>() {
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			if (progressDialog != null)
+				progressDialog.dismiss();
+			Toast.makeText(
+					context,
+					MyApplication.getApplication().getString(
+							R.string.devicesUtil_downFail), Toast.LENGTH_SHORT)
+					.show();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<File> arg0) {
+			if (progressDialog != null)
+				progressDialog.dismiss();
+			Toast.makeText(
+					context,
+					MyApplication.getApplication().getString(
+							R.string.devicesUtil_downSuccess),
+					Toast.LENGTH_SHORT).show();
+
+			Intent intent = new Intent(Intent.ACTION_VIEW);
+			intent.setDataAndType(
+					Uri.fromFile(new File(FileUtil.APK_PATH + "findme.apk")),
+					"application/vnd.android.package-archive");
+			context.startActivity(intent);
+		}
+		@Override
+		public void onCancelled() {
+			// TODO Auto-generated method stub
+			Log.e("cxmcxm", "取消了");
+			super.onCancelled();
+		}
+
+		@Override
+		public void onLoading(long total, long current, boolean isUploading) {
+			// TODO Auto-generated method stub
+			Log.e("cxmcxm", total+"");
+			Log.e("cxmcxm", current+"");
+			super.onLoading(total, current, isUploading);
+		}
+	};
+	private RequestCallBack<String> VersionRC = new RequestCallBack<String>() {
+
+		@Override
+		public void onFailure(HttpException arg0, String arg1) {
+			// TODO Auto-generated method stub
+			Toast.makeText(
+					context,
+					MyApplication.getApplication().getString(
+							R.string.devicesUtil_getVersionFail),
+					Toast.LENGTH_SHORT).show();
+			if (progressDialog != null)
+				progressDialog.dismiss();
+		}
+
+		@Override
+		public void onSuccess(ResponseInfo<String> arg0) {
+			System.out.println("arg0" + arg0.result);
+			// 当前版本
+			String version = DevicesUtil.getVersion(context);
+			// 最新版本
+			String newVersion = JsonParseUtils.jsonToString(arg0.result,
+					"version");
+			if (version.equals(newVersion)) {
+				// 主界面不提示最新版
+				if (context instanceof MainActivity) {
+
+				} else {
+					Toast.makeText(
+							context,
+							MyApplication.getApplication().getString(
+									R.string.devicesUtil_isNew),
+							Toast.LENGTH_SHORT).show();
+				}
+
+				if (progressDialog != null)
+					progressDialog.dismiss();
+			} else if(!newVersion.equals("")){
+				myAlertDialog.showWoodDialog(true);
+				myAlertDialog.getDialog_title().setText(
+						MyApplication.getApplication().getString(
+								R.string.devicesUtil_ifDownNew));
+				myAlertDialog.getDialog_msg().setText(
+						MyApplication.getApplication().getString(
+								R.string.devicesUtil_nowVersion)
+								+ version
+								+ "\n"
+								+ MyApplication.getApplication().getString(
+										R.string.devicesUtil_willVersion)
+								+ newVersion);
+				myAlertDialog.getPosButton().setText(
+						MyApplication.getApplication().getString(
+								R.string.devicesUtil_nowUpdate));
+				myAlertDialog.getNevButton().setText(
+						MyApplication.getApplication().getString(
+								R.string.devicesUtil_afterUpdate));
+				myAlertDialog.getPosButton().setOnClickListener(
+						new OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								myAlertDialog.dismiss();
+								progressDialog = ProgressDialog
+										.show(context,
+												MyApplication
+														.getApplication()
+														.getString(
+																R.string.devicesUtil_pleaseWait),
+												MyApplication
+														.getApplication()
+														.getString(
+																R.string.devicesUtil_uploading),
+												false, false);
+								progressDialog.setCancelable(false);
+								// 如果存在老版，先删除
+								File apkfFile = new File(FileUtil.APK_PATH
+										+ "findme.apk");
+								if (apkfFile.exists()) {
+									apkfFile.delete();
+								}
+								// 下载新版apk
+								File destDir = new File(FileUtil.BASE_PATH
+										+ "apk");
+								if (!destDir.exists()) {
+									destDir.mkdirs();
+								}
+								webServer.downloadAPK(ApkRC, FileUtil.APK_PATH
+										+ "findme.apk");
+							}
+						});
+				myAlertDialog.getNevButton().setOnClickListener(
+						new OnClickListener() {
+							@Override
+							public void onClick(View v) {
+								// TODO Auto-generated method stub
+								myAlertDialog.dismiss();
+							}
+						});
+			}
+			if (progressDialog != null)
+				progressDialog.dismiss();
+		}
+	};
+
+}
